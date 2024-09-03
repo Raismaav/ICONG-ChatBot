@@ -16,8 +16,7 @@ else:
     messages = []
 
 if len(messages) == 0:
-    messages = [{"role": "system",
-                 "content": "Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas."}]
+    messages = [{"role": "system", "content": "Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas."}]
     message = input("Escribe un mensaje: ")
     messages.append({"role": "user", "content": message})
 else:
@@ -28,13 +27,17 @@ else:
 
 completion = client.chat.completions.create(
     model="gpt-4o-mini",
-    messages=messages
+    messages=messages,
+    temperature=1,
+    max_tokens=256,
+    top_p=1,
+    frequency_penalty=0,
+    presence_penalty=0,
 )
 
-print(completion.choices[0].message.content)
-messages.append({"role": completion.choices[0].message.role, "content": completion.choices[0].message.content})
-
-print(messages)
+message = completion.choices[0].message.content
+print(message)
+messages.append({"role": completion.choices[0].message.role, "content": message})
 # guardar messages en un archivo json
 with open('messages.json', 'w') as f:
     json.dump(messages, f)
