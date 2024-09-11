@@ -13,12 +13,7 @@ def suma(a, b):
 def resta(a, b):
     return a - b
 
-def temperaturaMedia(dia):
-    print(dia)
-    return query.obtener_temperaturas(dia)
-
 def temperaturas(dia, avg):
-    print(dia)
     return query.obtener_temperaturas(dia, avg)
 
 functions = [
@@ -74,9 +69,15 @@ while True:
         messages = [{"role": "system",
                      "content": "Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas. Siempre respondes en el idioma en el que te hablan "}]
         message = input("Escribe un mensaje: ")
+        if message == "exit":
+            print("Hasta luego! 👋")
+            break
         messages.append({"role": "user", "content": message})
     else:
         message = input("Escribe un mensaje: ")
+        if message == "exit":
+            print("Hasta luego! 👋")
+            break
         messages.append({"role": "user", "content": message})
 
     completion = client.chat.completions.create(
@@ -100,6 +101,7 @@ while True:
         elif function_name == "resta":
             result = resta(arguments["a"], arguments["b"])
         elif function_name == "temperaturas":
+            print(arguments["dia"], arguments["avg"])
             result = temperaturas(arguments["dia"], arguments["avg"])
         result_message = f"Resultado de la función {function_name}: {result}"
         print(result_message)
