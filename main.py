@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+
 from openai import OpenAI
 import json
 import queryFunctions as query
@@ -8,52 +10,65 @@ api_key = "sk-proj-WxxFCP8d-STpcqgB0j-AeLbA1nDhU_GzIg-rY-Zfkj-ot8C8NA-GmtcihaT3B
 client = OpenAI(api_key=api_key)
 
 def suma(a, b):
-    return a + b
+    return f"{a + b}"
 
 def resta(a, b):
-    return a - b
+    return f"{a - b}"
 
-def temperaturas(dia, avg):
-    return query.obtener_temperaturas(dia, avg)
+def temperaturas(dia, avg = True):
+    return f"{query.obtener_temperaturas(dia, avg)}"
 
-functions = [
+tools = [
     {
-        "name": "suma",
-        "description": "Suma dos números",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "a": {"type": "number", "description": "El primer número"},
-                "b": {"type": "number", "description": "El segundo número"}
-            },
-            "required": ["a", "b"]
+        "type": "function",
+        "function": {
+            "name": "temperaturas",
+            "description": "Obtiene las temperaturas que se registraron en un día específico",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "dia": {"type": "string", "description": "El día en formato 'YYYY-MM-DD' para el cual obtener las temperaturas"},
+                    "avg": {"type": "boolean", "description": "True si se desea obtener la temperatura media, False si se desea obtener todas las temperaturas registradas en el día."}
+                },
+                "required": ["dia", "avg"]
+            }
         }
     },
     {
-        "name": "resta",
-        "description": "Resta dos números",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "a": {"type": "number", "description": "El primer número"},
-                "b": {"type": "number", "description": "El segundo número"}
-            },
-            "required": ["a", "b"]
+        "type": "function",
+        "function": {
+            "name": "suma",
+            "description": "Suma dos números que entrega el usuario cuando lo pide explicitamente, el usuario debe mencionar que quiere sumar los números, si no menciona nada acerca de sumar no debe realizar la accion.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "num1": {"type": "number", "description": "El primer número de la suma"},
+                    "num2": {"type": "number", "description": "El segundo número de la suma"}
+                },
+                "required": ["num1", "num2"]
+            }
         }
     },
     {
-        "name": "temperaturas",
-        "description": "Obtiene las temperaturas que se registraron en un día específico",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "dia": {"type": "string", "description": "El día en formato 'YYYY-MM-DD' para el cual obtener las temperaturas"},
-                "avg": {"type": "boolean", "description": "True si se desea obtener la temperatura media, False si se desea obtener todas las temperaturas registradas en el día."}
-            },
-            "required": ["dia"]
+        "type": "function",
+        "function": {
+            "name": "resta",
+            "description": "Resta dos números que entrega el usuario cuando lo pide explicitamente, el usuario debe mencionar que quiere restar los números, si no menciona nada acerca de restar no debe realizar la accion.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "num1": {"type": "number", "description": "El primer número de la resta"},
+                    "num2": {"type": "number", "description": "El segundo número de la resta"}
+                },
+                "required": ["num1", "num2"]
+            }
         }
-    }
+    },
 ]
+
+system_message = [{"role": "system",
+                     "content": f"Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas. Siempre respondes en el idioma en el que te hablan. Hoy es {datetime.now().strftime('%Y-%m-%d')}"}]
+
 while True:
 
     if os.path.exists('messages.json'):
@@ -65,25 +80,16 @@ while True:
     else:
         messages = []
 
-    if len(messages) == 0:
-        messages = [{"role": "system",
-                     "content": "Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas. Siempre respondes en el idioma en el que te hablan "}]
-        message = input("Escribe un mensaje: ")
-        if message == "exit":
-            print("Hasta luego! 👋")
-            break
-        messages.append({"role": "user", "content": message})
-    else:
-        message = input("Escribe un mensaje: ")
-        if message == "exit":
-            print("Hasta luego! 👋")
-            break
-        messages.append({"role": "user", "content": message})
+    message = input("Escribe un mensaje: ")
+    if message == "exit":
+        print("Hasta luego! 👋")
+        break
+    messages.append({"role": "user", "content": message})
 
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=messages,
-        functions=functions,
+        messages=system_message + messages,
+        tools=tools,
         temperature=1,
         max_tokens=256,
         top_p=1,
@@ -92,20 +98,57 @@ while True:
     )
 
     response_message = completion.choices[0].message
-
-    if response_message.function_call:
-        function_name = response_message.function_call.name
-        arguments = json.loads(response_message.function_call.arguments)
-        if function_name == "suma":
-            result = suma(arguments["a"], arguments["b"])
-        elif function_name == "resta":
-            result = resta(arguments["a"], arguments["b"])
-        elif function_name == "temperaturas":
+    if response_message.tool_calls:
+        tool_call = response_message.tool_calls[0]
+        name = tool_call.function.name
+        arguments = json.loads(tool_call.function.arguments)
+        if name == "suma":
+            print(arguments["num1"], arguments["num2"])
+            result = suma(arguments["num1"], arguments["num2"])
+        elif name == "resta":
+            print(arguments["num1"], arguments["num2"])
+            result = resta(arguments["num1"], arguments["num2"])
+        elif name == "temperaturas":
             print(arguments["dia"], arguments["avg"])
             result = temperaturas(arguments["dia"], arguments["avg"])
-        result_message = f"Resultado de la función {function_name}: {result}"
-        print(result_message)
-        messages.append({"role": "assistant", "content": result_message})
+
+        messege_call = [
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": tool_call.id,
+                        "type": "function",
+                        "function": {
+                            "name": name,
+                            "arguments": f"{arguments}"
+                        }
+                    }
+                ]
+            },
+            {
+                "role": "tool",
+                "content": [{
+                    "type": "text",
+                    "text": result
+                }],
+                "tool_call_id": tool_call.id,
+            }
+        ]
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=system_message + messages + messege_call,
+            tools=tools,
+            temperature=1,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+        )
+        response_message = completion.choices[0].message
+
+        messages.append({"role": response_message.role, "content": response_message.content})
     else:
         messages.append({"role": response_message.role, "content": response_message.content})
 

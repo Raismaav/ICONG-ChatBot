@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="iot@localhost" uuid="742032b6-43d0-48b8-9724-0bfad2d96e9d">
+    <data-source source="LOCAL" name="iot@localhost" uuid="2390eaa2-b083-46a5-8b0d-f282ad756a31">
       <driver-ref>mariadb</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.mariadb.jdbc.Driver</jdbc-driver>

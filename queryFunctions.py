@@ -1,6 +1,5 @@
 import mysql.connector
 
-
 def obtener_temperaturas(fecha, avg: bool = True):
     conn = mysql.connector.connect(
         host='localhost',
