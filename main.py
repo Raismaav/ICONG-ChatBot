@@ -5,8 +5,11 @@ from openai import OpenAI
 import json
 import queryFunctions as query
 
+import matplotlib.pyplot as plt
 
-api_key = "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"
+debug = False
+
+api_key = "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"
 client = OpenAI(api_key=api_key)
 
 def suma(a, b):
@@ -17,6 +20,32 @@ def resta(a, b):
 
 def temperaturas(dia, avg = True):
     return f"{query.obtener_temperaturas(dia, avg)}"
+
+
+def distribucion_temperaturas(dia):
+    resultados = query.distribucion_temperaturas(dia)
+
+    # Extract temperatures and hours
+    temperaturas = [registro[0] for registro in resultados]
+    horas = [registro[1] for registro in resultados]
+
+    if len(temperaturas) == 0:
+        return "No hay datos para mostrar"
+
+    # Plot the data
+    plt.figure(figsize=(10, 5))
+    plt.plot(horas, temperaturas, marker='o')
+    plt.title(f'Distribución de Temperaturas para {dia}')
+    plt.xlabel('Hora')
+    plt.ylabel('Temperatura')
+    plt.grid(True)
+    plt.xticks(rotation=45)
+    plt.xticks([])
+    plt.tight_layout()
+    plt.savefig(f'distribucion_temperaturas_{dia}.png')
+    plt.show()
+
+    return "Imagen creada con la distribución de las temperaturas"
 
 tools = [
     {
@@ -31,6 +60,20 @@ tools = [
                     "avg": {"type": "boolean", "description": "True si se desea obtener la temperatura media, False si se desea obtener todas las temperaturas registradas en el día."}
                 },
                 "required": ["dia", "avg"]
+            }
+        }
+    },
+{
+        "type": "function",
+        "function": {
+            "name": "distribucion_temperaturas",
+            "description": "Obtiene las temperaturas que se registraron en un día específico para generar un grafico de la distribucion de las temperaturas",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "dia": {"type": "string", "description": "El día en formato 'YYYY-MM-DD' para el cual obtener la distribucion de las temperaturas"}
+                },
+                "required": ["dia"]
             }
         }
     },
@@ -67,7 +110,7 @@ tools = [
 ]
 
 system_message = [{"role": "system",
-                     "content": f"Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas. Siempre respondes en el idioma en el que te hablan. Hoy es {datetime.now().strftime('%Y-%m-%d')}"}]
+                     "content": f"Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas. Siempre respondes en el idioma en el que te hablan y no camias de idioma hasta que cambia el usuario. Si el usuario quiere salir del chat le debes decir que escriba la palabra exit, ya que eres una sistente en la linea de comandos. Hoy es {datetime.now().strftime('%Y-%m-%d')}"}]
 
 while True:
 
@@ -91,7 +134,7 @@ while True:
         messages=system_message + messages,
         tools=tools,
         temperature=1,
-        max_tokens=256,
+        # max_tokens=256,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -99,18 +142,20 @@ while True:
 
     response_message = completion.choices[0].message
     if response_message.tool_calls:
+        if debug: print("😛")
         tool_call = response_message.tool_calls[0]
         name = tool_call.function.name
         arguments = json.loads(tool_call.function.arguments)
+        result = ""
         if name == "suma":
-            print(arguments["num1"], arguments["num2"])
             result = suma(arguments["num1"], arguments["num2"])
         elif name == "resta":
-            print(arguments["num1"], arguments["num2"])
             result = resta(arguments["num1"], arguments["num2"])
         elif name == "temperaturas":
-            print(arguments["dia"], arguments["avg"])
             result = temperaturas(arguments["dia"], arguments["avg"])
+        elif name == "distribucion_temperaturas":
+            if debug: print(f"🤪\n{arguments['dia']}")
+            result = distribucion_temperaturas(arguments["dia"])
 
         messege_call = [
             {
@@ -153,7 +198,7 @@ while True:
         messages.append({"role": response_message.role, "content": response_message.content})
 
     print(response_message.content)
-    print(completion)
+    # print(completion)
 
     with open('messages.json', 'w') as f:
         json.dump(messages, f)
