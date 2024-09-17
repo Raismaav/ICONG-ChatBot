@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+
 import os
 from datetime import datetime
 
@@ -9,8 +11,8 @@ import matplotlib.pyplot as plt
 
 debug = False
 
-api_key = "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"
-client = OpenAI(api_key=api_key)
+load_dotenv()
+client = OpenAI(api_key=os.getenv('openai_key'))
 
 def suma(a, b):
     return f"{a + b}"
@@ -42,7 +44,7 @@ def distribucion_temperaturas(dia):
     plt.xticks(rotation=45)
     plt.xticks([])
     plt.tight_layout()
-    plt.savefig(f'distribucion_temperaturas_{dia}.png')
+    plt.savefig(f'images/distribucion_temperaturas_{dia}.png')
     plt.show()
 
     return "Imagen creada con la distribución de las temperaturas"
@@ -114,9 +116,9 @@ system_message = [{"role": "system",
 
 while True:
 
-    if os.path.exists('messages.json'):
+    if os.path.exists('messages/messages.json'):
         try:
-            with open('messages.json', 'r') as f:
+            with open('messages/messages.json', 'r') as f:
                 messages = json.load(f)
         except json.JSONDecodeError:
             messages = []
@@ -200,5 +202,5 @@ while True:
     print(response_message.content)
     # print(completion)
 
-    with open('messages.json', 'w') as f:
+    with open('messages/messages.json', 'w') as f:
         json.dump(messages, f)
