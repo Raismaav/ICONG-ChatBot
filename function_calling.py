@@ -102,41 +102,46 @@ def distribucion_temperaturas(dia):
     return "Imagen creada con la distribución de las temperaturas"
 
 def call_function(tool_calls, system_message, messages):
-    tool_call = tool_calls[0]
-    name = tool_call.function.name
-    arguments = json.loads(tool_call.function.arguments)
-    result = ""
-    if name == "suma":
-        result = suma(arguments["num1"], arguments["num2"])
-    elif name == "resta":
-        result = resta(arguments["num1"], arguments["num2"])
-    elif name == "temperaturas":
-        result = qf.obtener_temperaturas(arguments["dia"], arguments["avg"])
-    elif name == "distribucion_temperaturas":
-        result = distribucion_temperaturas(arguments["dia"])
+    calls = []
+    tools_called = []
+    for tool_call in tool_calls:
+        print("😛")
+        name = tool_call.function.name
+        arguments = json.loads(tool_call.function.arguments)
+        result = ""
+        if name == "suma":
+            result = suma(arguments["num1"], arguments["num2"])
+        elif name == "resta":
+            result = resta(arguments["num1"], arguments["num2"])
+        elif name == "temperaturas":
+            result = qf.obtener_temperaturas(arguments["dia"], arguments["avg"])
+        elif name == "distribucion_temperaturas":
+            result = distribucion_temperaturas(arguments["dia"])
 
-    messege_call = [
-        {
-            "role": "assistant",
-            "content": "",
-            "tool_calls": {
-                "id": tool_call.id,
-                "type": "function",
-                "function": {
-                    "name": name,
-                    "arguments": f"{arguments}"
-                }
+        tools_called.append({
+            "id": tool_call.id,
+            "type": "function",
+            "function": {
+                "name": name,
+                "arguments": f"{arguments}"
             }
-        },
-        {
+        })
+
+        calls.append({
             "role": "tool",
             "content": [{
                 "type": "text",
                 "text": result
             }],
             "tool_call_id": tool_call.id,
-        }
-    ]
+        })
+
+    messege_call = [
+        {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": tools_called
+        }] + calls
 
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -149,8 +154,10 @@ def call_function(tool_calls, system_message, messages):
         presence_penalty=0,
     )
 
+
+
     response_message = completion.choices[0].message
     if response_message.content:
         return {"role": response_message.role, "content": response_message.content}
     else:
-        return ""
+        return call_function(response_message.tool_calls, system_message, messages + messege_call)
