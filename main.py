@@ -1,16 +1,12 @@
-from dotenv import load_dotenv
-from function_calling import call_function, tools
-import os
+from functions_to_call import call_function, functions
+from assistant_connection import Assistant
 from datetime import datetime
-
-from openai import OpenAI
 import json
+import os
 
-load_dotenv()
-client = OpenAI(api_key=os.getenv('openai_key'))
+system_message = f"Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas. Siempre respondes en el idioma en el que te hablan y no camias de idioma hasta que cambia el usuario. Si el usuario quiere salir del chat le debes decir que escriba la palabra exit, ya que eres una sistente en la linea de comandos. Hoy es {datetime.now().strftime('%Y-%m-%d')}"
 
-system_message = [{"role": "system",
-                   "content": f"Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas. Siempre respondes en el idioma en el que te hablan y no camias de idioma hasta que cambia el usuario. Si el usuario quiere salir del chat le debes decir que escriba la palabra exit, ya que eres una sistente en la linea de comandos. Hoy es {datetime.now().strftime('%Y-%m-%d')}"}]
+assistant = Assistant(system_message, "gpt-4o-mini", functions)
 
 while True:
     if os.path.exists('messages/messages.json'):
@@ -28,20 +24,9 @@ while True:
         break
     messages.append({"role": "user", "content": message})
 
-    completion = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=system_message + messages,
-        tools=tools,
-        temperature=1,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-    )
-
-    response_message = completion.choices[0].message
+    response_message = assistant.respose_to(messages)
     if response_message.tool_calls:
-        messages.append(call_function(response_message.tool_calls, system_message, messages))
+        messages.append(call_function(response_message.tool_calls, assistant, messages))
     else:
         messages.append({"role": response_message.role, "content": response_message.content})
 

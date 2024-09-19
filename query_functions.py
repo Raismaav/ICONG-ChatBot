@@ -1,42 +1,42 @@
-import mysql.connector
-def obtener_temperaturas(fecha, avg: bool = True):
-    conn = mysql.connector.connect(
-        host='localhost',
-        port=33,
-        user='root',
-        password='',
-        database='iot'
-    )
-    cursor = conn.cursor()
+import matplotlib.pyplot as plt
+from database_connection import DatabaseConnection
+
+def obtener_temperaturas(fecha, avg=True):
+    db = DatabaseConnection()
     query = "SELECT temperature FROM information WHERE date = %s"
-    cursor.execute(query, (fecha,))
-    temperaturas = [fila[0] for fila in cursor.fetchall()]
-    conn.close()
+    temperaturas = [fila[0] for fila in db.execute_query(query, (fecha,))]
+    db.close()
 
     if avg:
         if temperaturas:
             media = sum(temperaturas) / len(temperaturas)
         else:
-            return "None"  # or handle the case when there are no temperatures
+            return "None"
         return "{:.2f}".format(media)
     return f"{temperaturas}"
 
-# print(obtener_temperaturas('2023-12-01', avg=True))
-
 def distribucion_temperaturas(fecha):
-    conn = mysql.connector.connect(
-        host='localhost',
-        port=33,
-        user='root',
-        password='',
-        database='iot'
-    )
-    cursor = conn.cursor()
+    db = DatabaseConnection()
     query = "SELECT temperature, datahour FROM information WHERE date = %s"
-    cursor.execute(query, (fecha,))
-    resultados = cursor.fetchall()
-    conn.close()
+    resultados = db.execute_query(query, (fecha,))
+    db.close()
 
-    return resultados
+    temperaturas = [registro[0] for registro in resultados]
+    horas = [registro[1] for registro in resultados]
 
-# print(dis('2024-07-07'))
+    if len(temperaturas) == 0:
+        return "No hay datos para mostrar"
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(horas, temperaturas, marker='o')
+    plt.title(f'Distribución de Temperaturas para {fecha}')
+    plt.xlabel('Hora')
+    plt.ylabel('Temperatura')
+    plt.grid(True)
+    plt.xticks(rotation=45)
+    plt.xticks([])
+    plt.tight_layout()
+    plt.savefig(f'images/distribucion_temperaturas_{fecha}.png')
+    plt.show()
+
+    return "Imagen creada con la distribución de las temperaturas"
