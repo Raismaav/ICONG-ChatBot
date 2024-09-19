@@ -1,5 +1,4 @@
 import mysql.connector
-
 def obtener_temperaturas(fecha, avg: bool = True):
     conn = mysql.connector.connect(
         host='localhost',
@@ -18,9 +17,9 @@ def obtener_temperaturas(fecha, avg: bool = True):
         if temperaturas:
             media = sum(temperaturas) / len(temperaturas)
         else:
-            return None  # or handle the case when there are no temperatures
+            return "None"  # or handle the case when there are no temperatures
         return "{:.2f}".format(media)
-    return temperaturas
+    return f"{temperaturas}"
 
 # print(obtener_temperaturas('2023-12-01', avg=True))
 
@@ -39,31 +38,5 @@ def distribucion_temperaturas(fecha):
     conn.close()
 
     return resultados
-
-def dis(dia):
-    import matplotlib.pyplot as plt
-    resultados = distribucion_temperaturas(dia)
-
-    # Extract temperatures and hours
-    temperaturas = [registro[0] for registro in resultados]
-    horas = [registro[1] for registro in resultados]
-
-    if len(temperaturas) == 0:
-        return "No hay datos para mostrar"
-
-    # Plot the data
-    plt.figure(figsize=(10, 5))
-    plt.plot(horas, temperaturas, marker='o')
-    plt.title(f'Distribución de Temperaturas para {dia}')
-    plt.xlabel('Hora')
-    plt.ylabel('Temperatura')
-    plt.grid(True)
-    plt.xticks(rotation=45)
-    plt.xticks([])
-    plt.tight_layout()
-    plt.savefig(f'distribucion_temperaturas_{dia}.png')
-    plt.show()
-
-    return "Imagen creada con la distribución de las temperaturas"
 
 # print(dis('2024-07-07'))
