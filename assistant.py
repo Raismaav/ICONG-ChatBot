@@ -4,55 +4,109 @@ from openai import OpenAI
 import json
 import os
 
-class Assistant:
-    def __init__(self, system_message:str, default_model: str, temperature:float = 1, max_tokens:int = 256, have_tools:bool = False):
-        load_dotenv()
 
-        self.client = OpenAI(api_key=os.getenv('openai_key'))
-        self.system_message = [{"role": "system", "content": system_message}]
-        self.model = default_model
-        self.temperature = temperature
-        self.max_tokens = max_tokens
-        self.tools = tools if have_tools else None
+class Assistant:
+    """
+    This class represents an assistant that interacts with OpenAI's API to generate responses.
+    It also has the ability to call tools (functions) if necessary.
+
+    Attributes:
+        client: Instance of the OpenAI client.
+        system_message: System message to initialize the conversation with a specific context.
+        model: Default model used for API completions.
+        temperature: Parameter controlling randomness in the model's responses.
+        max_tokens: Maximum number of tokens that OpenAI can return in a response.
+        tools: Tools (functions) that the assistant can use if enabled.
+    """
+
+    def __init__(self, system_message: str, default_model: str, temperature: float = 1, max_tokens: int = 256,
+                 have_tools: bool = False):
+        """
+        Initializes the assistant instance with the given parameters.
+
+        Args:
+            system_message (str): Initial system message.
+            default_model (str): Name of the OpenAI model to be used.
+            temperature (float): Controls randomness in text generation.
+            max_tokens (int): Token limit for the responses.
+            have_tools (bool): Indicates if the assistant has tools available to use.
+        """
+        load_dotenv()  # Load environment variables, such as the OpenAI API key.
+
+        self.client = OpenAI(api_key=os.getenv('openai_key'))  # Sets up the OpenAI client with the API key.
+        self.system_message = [{"role": "system", "content": system_message}]  # Initial system context message.
+        self.model = default_model  # Default OpenAI model to be used.
+        self.temperature = temperature  # Controls randomness.
+        self.max_tokens = max_tokens  # Maximum token limit for the responses.
+        self.tools = tools if have_tools else None  # Initializes tools if they are enabled.
 
     def __call_function(self, tool_calls, messages):
-        calls = []
-        tools_called = []
+        """
+        Executes the requested tools (functions) in the context of the conversation.
 
+        Args:
+            tool_calls (list): List of requested tool calls to execute.
+            messages (list): List of previous messages in the conversation.
+
+        Returns:
+            Generated response after executing the tools.
+        """
+        calls = []  # List to store the responses from the tools.
+        tools_called = []  # List to track which tools have been called.
+
+        # Iterate over each tool call and execute the corresponding function.
         for tool_call in tool_calls:
-            name = tool_call.function.name
-            arguments = json.loads(tool_call.function.arguments)
-            result = call_function(name, arguments)
+            name = tool_call.function.name  # Name of the function to be executed.
+            arguments = json.loads(tool_call.function.arguments)  # Function arguments in JSON format.
+            result = call_function(name, arguments)  # Call the function and get the result.
 
+            # Store the record of the tool call.
             tools_called.append({
                 "id": tool_call.id,
                 "type": "function",
                 "function": {
                     "name": name,
                     "arguments": f"{arguments}"
-                }})
+                }
+            })
 
+            # Store the result in the calls list.
             calls.append({
                 "role": "tool",
                 "content": result,
                 "tool_call_id": tool_call.id,
             })
 
+        # Prepare the tool call messages for the response.
         messege_call = [{
-                "role": "assistant",
-                "content": "",
-                "tool_calls": tools_called
+            "role": "assistant",
+            "content": "",
+            "tool_calls": tools_called
         }] + calls
 
+        # Generate a response using the tool calls and previous messages.
         response = self.__response_to(messages + messege_call)
 
+        # If the response contains content, return it; otherwise, call the tools again.
         if response.content:
             return response
         else:
             return self.__call_function(response.tool_calls, messages + messege_call)
 
     def __response_to(self, messages: list, model: str = None):
-        model = model or self.model
+        """
+        Generates a response based on the provided messages and model.
+
+        Args:
+            messages (list): List of messages in the conversation.
+            model (str, optional): Model to use for generating the response. Defaults to the assistant's model.
+
+        Returns:
+            The response generated by OpenAI, with possible tool calls.
+        """
+        model = model or self.model  # Use the provided model or the default model.
+
+        # Create the chat completion request to OpenAI's API.
         completion = self.client.chat.completions.create(
             model=model,
             messages=self.system_message + messages,
@@ -63,13 +117,25 @@ class Assistant:
             frequency_penalty=0,
             presence_penalty=0,
         )
-        response = completion.choices[0].message
 
+        response = completion.choices[0].message  # Get the first message from the response.
+
+        # If the response includes tool calls, execute them.
         if response.tool_calls:
             return self.__call_function(response.tool_calls, messages)
         else:
             return response
 
     def response_to(self, messages: list, model: str = None):
-        response = self.__response_to(messages, model)
-        return {"role": response.role, "content": response.content}
+        """
+        Public method to generate a response to the given messages.
+
+        Args:
+            messages (list): List of messages that the assistant should respond to.
+            model (str, optional): Model to use for generating the response. Defaults to the assistant's model.
+
+        Returns:
+            A dictionary with the role of the sender (assistant) and the content of the response.
+        """
+        response = self.__response_to(messages, model)  # Generate the response.
+        return {"role": response.role, "content": response.content}  # Return the formatted response.
