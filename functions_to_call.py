@@ -1,8 +1,6 @@
-from assistant_connection import Assistant
 import query_functions as qf
-import json
 
-functions = [
+tools = [
     {
         "type": "function",
         "function": {
@@ -69,48 +67,16 @@ def suma(a, b):
 
 def resta(a, b):
     return f"{a - b}"
-def call_function(tool_calls, assistant: Assistant, messages):
-    calls = []
-    tools_called = []
-    for tool_call in tool_calls:
-        name = tool_call.function.name
-        arguments = json.loads(tool_call.function.arguments)
-        result = ""
-        if name == "suma":
-            result = suma(arguments["num1"], arguments["num2"])
-        elif name == "resta":
-            result = resta(arguments["num1"], arguments["num2"])
-        elif name == "temperaturas":
-            result = qf.obtener_temperaturas(arguments["dia"], arguments["avg"])
-        elif name == "distribucion_temperaturas":
-            result = qf.distribucion_temperaturas(arguments["dia"])
 
-        tools_called.append({
-            "id": tool_call.id,
-            "type": "function",
-            "function": {
-                "name": name,
-                "arguments": f"{arguments}"
-            }
-        })
-
-        calls.append({
-            "role": "tool",
-            "content": result,
-            "tool_call_id": tool_call.id,
-        })
-
-    messege_call = [
-        {
-            "role": "assistant",
-            "content": "",
-            "tool_calls": tools_called
-        }] + calls
-
-
-
-    response_message = assistant.respose_to(messages + messege_call)
-    if response_message.content:
-        return {"role": response_message.role, "content": response_message.content}
+def call_function(name: str, arguments: dict):
+    if name == "suma":
+        result = suma(arguments["num1"], arguments["num2"])
+    elif name == "resta":
+        result = resta(arguments["num1"], arguments["num2"])
+    elif name == "temperaturas":
+        result = qf.obtener_temperaturas(arguments["dia"], arguments["avg"])
+    elif name == "distribucion_temperaturas":
+        result = qf.distribucion_temperaturas(arguments["dia"])
     else:
-        return call_function(response_message.tool_calls, assistant, messages + messege_call)
+        result = "No se encontro la función solicitada"
+    return result
