@@ -1,4 +1,21 @@
 import query_functions as qf
+import os
+
+def get_title_context_files():
+    # Directory containing the context files
+    context_files_dir = 'context_files'
+
+    # List to store the titles
+    titles = []
+
+    # Iterate over each file in the directory
+    for filename in os.listdir(context_files_dir):
+        # Check if the file is a regular file (not a directory)
+        if os.path.isfile(os.path.join(context_files_dir, filename)):
+            # Extract the title (assuming the title is the filename without extension)
+            titles.append(f"{filename}")
+
+    return titles
 
 tools = [
     {
@@ -44,22 +61,7 @@ tools = [
                 "required": ["num1", "num2"]
             }
         }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "resta",
-            "description": "Resta dos números que entrega el usuario cuando lo pide explicitamente, el usuario debe mencionar que quiere restar los números, si no menciona nada acerca de restar no debe realizar la accion.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "num1": {"type": "number", "description": "El primer número de la resta"},
-                    "num2": {"type": "number", "description": "El segundo número de la resta"}
-                },
-                "required": ["num1", "num2"]
-            }
-        }
-    },
+    }
 ]
 
 def suma(a, b):

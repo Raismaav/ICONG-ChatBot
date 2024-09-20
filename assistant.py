@@ -1,4 +1,7 @@
+from Crypto.SelfTest.Cipher.test_CFB import file_name
+
 from functions_to_call import call_function, tools
+from context_manager import ContextManager
 from dotenv import load_dotenv
 from openai import OpenAI
 import json
@@ -33,12 +36,13 @@ class Assistant:
         """
         load_dotenv()  # Load environment variables, such as the OpenAI API key.
 
+        self.context_manager = ContextManager()  # Initialize the context manager.
         self.client = OpenAI(api_key=os.getenv('openai_key'))  # Sets up the OpenAI client with the API key.
         self.system_message = [{"role": "system", "content": system_message}]  # Initial system context message.
         self.model = default_model  # Default OpenAI model to be used.
         self.temperature = temperature  # Controls randomness.
         self.max_tokens = max_tokens  # Maximum token limit for the responses.
-        self.tools = tools if have_tools else None  # Initializes tools if they are enabled.
+        self.tools = self.context_manager.get_context_functions() + tools if have_tools else self.context_manager.get_context_functions()  # Initializes tools if they are enabled.
 
     def __call_function(self, tool_calls, messages):
         """
@@ -58,7 +62,10 @@ class Assistant:
         for tool_call in tool_calls:
             name = tool_call.function.name  # Name of the function to be executed.
             arguments = json.loads(tool_call.function.arguments)  # Function arguments in JSON format.
-            result = call_function(name, arguments)  # Call the function and get the result.
+            if name == "get_context_from":
+                result = self.context_manager.get_context_from(arguments['file_name'])  # Call the function and get the result.
+            else:
+                result = call_function(name, arguments)  # Call the function and get the result.
 
             # Store the record of the tool call.
             tools_called.append({
@@ -112,7 +119,7 @@ class Assistant:
             messages=self.system_message + messages,
             tools=self.tools,
             temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            # max_tokens=self.max_tokens,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0,
