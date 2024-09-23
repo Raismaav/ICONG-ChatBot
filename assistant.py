@@ -1,12 +1,9 @@
-from Crypto.SelfTest.Cipher.test_CFB import file_name
-
-from functions_to_call import call_function, tools
+from tool_manager import ToolManager
 from context_manager import ContextManager
 from dotenv import load_dotenv
 from openai import OpenAI
 import json
 import os
-
 
 class Assistant:
     """
@@ -36,13 +33,14 @@ class Assistant:
         """
         load_dotenv()  # Load environment variables, such as the OpenAI API key.
 
+        self.tool_manager = ToolManager()  # Initialize the tool manager.
         self.context_manager = ContextManager()  # Initialize the context manager.
         self.client = OpenAI(api_key=os.getenv('openai_key'))  # Sets up the OpenAI client with the API key.
         self.system_message = [{"role": "system", "content": system_message}]  # Initial system context message.
         self.model = default_model  # Default OpenAI model to be used.
         self.temperature = temperature  # Controls randomness.
         self.max_tokens = max_tokens  # Maximum token limit for the responses.
-        self.tools = self.context_manager.get_context_functions() + tools if have_tools else self.context_manager.get_context_functions()  # Initializes tools if they are enabled.
+        self.tools = self.context_manager.get_context_functions() + self.tool_manager.get_tools() if have_tools else self.context_manager.get_context_functions()  # Initializes tools if they are enabled.
 
     def __call_function(self, tool_calls, messages):
         """
@@ -65,7 +63,7 @@ class Assistant:
             if name == "get_context_from":
                 result = self.context_manager.get_context_from(arguments['file_name'])  # Call the function and get the result.
             else:
-                result = call_function(name, arguments)  # Call the function and get the result.
+                result = self.tool_manager.call_function(name, arguments)  # Call the function and get the result.
 
             # Store the record of the tool call.
             tools_called.append({

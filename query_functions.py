@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from database_connection import DatabaseConnection
 
-def obtener_temperaturas(fecha, avg=True):
+def get_temperatures(fecha, avg=True):
     db = DatabaseConnection()
     query = "SELECT temperature FROM information WHERE date = %s"
     temperaturas = [fila[0] for fila in db.execute_query(query, (fecha,))]
@@ -15,7 +15,7 @@ def obtener_temperaturas(fecha, avg=True):
         return "{:.2f}".format(media)
     return f"{temperaturas}"
 
-def distribucion_temperaturas(fecha):
+def temperature_distribution(fecha):
     db = DatabaseConnection()
     query = "SELECT temperature, datahour FROM information WHERE date = %s"
     resultados = db.execute_query(query, (fecha,))
