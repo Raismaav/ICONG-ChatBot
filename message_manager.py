@@ -19,7 +19,7 @@ class MessageManager:
         filename: The JSON file where the conversation is stored.
     """
 
-    def __init__(self, system_message: str = None, user: str = None, title: str = 'Conversation',
+    def __init__(self, system_message: str = None, user: str = None, title: str = 'New conversation',
                  conversation_file: str = None, path: str = 'conversations/'):
         """
         Initializes a new conversation or loads an existing one from a JSON file.
@@ -76,7 +76,7 @@ class MessageManager:
             }
 
             # Create the JSON file with the title and ID in the filename
-            self.filename = os.path.join(self.path, f"{self.title}_{self.conversation_id}.json")
+            self.filename = os.path.join(self.path, f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json")
             with open(self.filename, 'w') as f:
                 json.dump(self.conversation, f, indent=2)
 
@@ -124,6 +124,24 @@ class MessageManager:
         with open(self.filename, 'w') as f:
             json.dump(self.conversation, f, indent=2)
 
+    def modify_title(self, new_title: str):
+        """
+        Modifies the title of the conversation.
+
+        Args:
+            new_title (str): The new title of the conversation.
+        """
+        self.title = new_title.replace('.', '')
+        self.conversation['conversation']['title'] = new_title
+
+        # Delete the old JSON file
+        os.remove(self.filename)
+
+        # Create the JSON file with the new title and ID in the filename
+        self.filename = os.path.join(self.path, f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json")
+        with open(self.filename, 'w') as f:
+            json.dump(self.conversation, f, indent=2)
+
     def get_system_message(self) -> str:
         """
         Retrieves the current system message of the conversation.
@@ -162,3 +180,12 @@ class MessageManager:
         if self.messages:
             return self.messages[-1]
         return {}
+
+    def get_message_count(self) -> int:
+        """
+        Returns the number of messages in the conversation.
+
+        Returns:
+            int: The number of messages.
+        """
+        return len(self.messages)
