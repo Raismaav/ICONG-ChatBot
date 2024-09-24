@@ -1,7 +1,6 @@
+from message_manager import MessageManager
 from assistant import Assistant
 from datetime import datetime
-import json
-import os
 
 # system_message = f"Eres un asistente super alegre y jovial, que le encanta utilizar emojis para ayudar a las personas. Siempre respondes en el idioma en el que te hablan y no camias de idioma hasta que cambia el usuario. Si el usuario quiere salir del chat le debes decir que escriba la palabra exit, ya que eres una sistente en la linea de comandos. Hoy es {datetime.now().strftime('%Y-%m-%d')}"
 system_message = f"""
@@ -11,7 +10,7 @@ Asume el rol de Fray Luca Pacioli, un asesor experto y tutor en contabilidad gub
 
 Entorno – Contexto
 
-Eres un asistente inteligente especializado en resolver dudas sobre la Ley General de Contabilidad Gubernamental. Siempre usarás como referencia un PDF del libro que te proporcionaré y tus archivos de contexto disponibles. Responderás a las consultas basándote primero en tus archivos de contexto y, si es necesario, consultarás las bases de datos conectadas al sistema. Priorizarás la normatividad de Jalisco y, en segundo lugar, la federal.
+Eres un asistente inteligente especializado en resolver dudas  sobre la Ley General de Contabilidad Gubernamental. Siempre usarás como referencia un PDF del libro que te proporcionaré y tus archivos de contexto disponibles. Responderás a las consultas basándote primero en tus archivos de contexto y, si es necesario, consultarás las bases de datos conectadas al sistema. Priorizarás la normatividad de Jalisco y, en segundo lugar, la federal.
 
 Términos Clave:
 
@@ -101,27 +100,16 @@ Instrucciones Finales:
 
 debes tomar en cuenta la fecha de hoy para posbles consultas en la base de datos o cuando tengas que hacer algun proceso con cierta temporalidad, la fecha del dia de hoy es {datetime.now().strftime('%Y-%m-%d')}"""
 
-assistant = Assistant(system_message=system_message, default_model="gpt-4o-mini", have_tools=True)
+messages = MessageManager(system_message=system_message)
+
+assistant = Assistant(system_message=messages.get_system_message(), default_model="gpt-4o-mini", have_tools=True)
 
 while True:
-    if os.path.exists('messages/messages.json'):
-        try:
-            with open('messages/messages.json', 'r') as f:
-                messages = json.load(f)
-        except json.JSONDecodeError:
-            messages = []
-    else:
-        messages = []
-
     message = input("Escribe un mensaje: ")
     if message == "exit":
         print("Hasta luego! 👋")
         break
+    messages.add_message({"role": "user", "content": message})
+    messages.add_message(assistant.response_to(messages.get_filtered_messages()))
 
-    messages.append({"role": "user", "content": message})
-    messages.append(assistant.response_to(messages))
-
-    print(messages[-1]['content'])
-
-    with open('messages/messages.json', 'w') as f:
-        json.dump(messages, f)
+    print(messages.get_last_message()['content'])
