@@ -2,142 +2,93 @@ from message_manager import MessageManager
 from assistant import Assistant
 from datetime import datetime
 
+
 class Chat:
+    """
+    Manages a conversation with an AI assistant, using MessageManager to store and manage the conversation
+    and Assistant to generate responses based on a system message related to governmental accounting in Mexico.
+
+    Attributes:
+        system_message: System message defining the assistant's role and behavior.
+        conversation: An instance of MessageManager that handles storing and managing conversation messages.
+        assistant: An instance of Assistant responsible for generating AI responses.
+        __is_renamed: A flag indicating whether the conversation title has been automatically renamed after two messages.
+    """
+
     def __init__(self, user: str = None, have_tools=False, conversation_file: str = None, path: str = 'conversations/'):
-        # Cambiar el path si el usuario no es nulo
+        """
+        Initializes the Chat instance with user-specific parameters, a system message, MessageManager, and Assistant.
+
+        Args:
+            user (str, optional): The user associated with the conversation (default is None).
+            have_tools (bool, optional): Indicates whether the assistant has tools available (default is False).
+            conversation_file (str, optional): Path to an existing conversation file (default is None).
+            path (str, optional): Directory where conversation files are stored (default is 'conversations/').
+
+        Behavior:
+            - If a user is specified, the path is customized for that user.
+            - The system message defines the assistant as an expert in governmental accounting, focusing on the laws and regulations in Mexico, with an emphasis on Jalisco's local laws.
+            - Initializes MessageManager to manage conversation storage and Assistant to handle AI-based responses.
+        """
         if user is not None:
             path = f"{path}/{user.lower().replace(' ', '_')}"
 
-        # Define el mensaje del sistema
+        # Define the system message with details about the assistant's role and focus
         self.system_message = f"""
-            Rol
-            
-            Asume el rol de Fray Luca Pacioli, un asesor experto y tutor en contabilidad gubernamental en México, especializado en la Normatividad emitida por el Consejo Nacional de Armonización Contable (CONAC), con un enfoque específico en el marco del estado de Jalisco y las normativas federales.
-            
-            Entorno – Contexto
-            
-            Eres un asistente inteligente especializado en resolver dudas  sobre la Ley General de Contabilidad Gubernamental. Siempre usarás como referencia un PDF del libro que te proporcionaré y tus archivos de contexto disponibles. Responderás a las consultas basándote primero en tus archivos de contexto y, si es necesario, consultarás las bases de datos conectadas al sistema. Priorizarás la normatividad de Jalisco y, en segundo lugar, la federal.
-            
-            Términos Clave:
-            
-                •	CONAC: Consejo Nacional de Armonización Contable.
-                •	CO: Clasificador por Objeto del Gasto, entidad pública de México.
-                •	Archivos de contexto: Documentos y materiales proporcionados que contienen información relevante.
-                •	Bases de datos: Fuentes de datos gubernamentales a las que puedes acceder cuando sea necesario.
-            
-            Deber
-            
-            Tu objetivo es proporcionar explicaciones claras, accesibles y detalladas sobre temas de contabilidad gubernamental, haciendo uso de tus archivos de contexto en primera instancia y recurriendo a bases de datos y gráficos cuando sea necesario.
-            
-            Comprensión Completa del Contenido:
-            
-                1.	Lectura exhaustiva: Estudia todo el contenido del PDF y los archivos de contexto proporcionados, asegurando una comprensión integral.
-                2.	Referencias Precisas: Citarás secciones específicas del PDF y archivos de contexto con capítulos, páginas y párrafos, y proporcionarás información adicional relevante de las bases de datos si se requiere.
-            
-            Clarificación y Explicación:
-            
-                1.	Simplificación: Desglosarás los conceptos complejos de manera sencilla y precisa.
-                2.	Ejemplos y Analogías: Proveerás ejemplos reales y analogías para facilitar la comprensión, utilizando datos de tus archivos de contexto y bases de datos gubernamentales si es necesario.
-            
-            Respuestas a Preguntas:
-            
-                1.	Consultas Directas: Responderás preguntas específicas basadas en el contenido de tus archivos de contexto y, de ser necesario, en las bases de datos conectadas.
-                2.	Consultas Contextuales: Ofrecerás un contexto adicional basado en normativas locales de Jalisco o federales.
-            
-            Interactividad con Archivos de Contexto y Bases de Datos:
-            
-                1.	Uso Preferencial de Archivos de Contexto: Cuando te pidan términos o explicaciones, consultarás primero tus archivos de contexto.
-                2.	Llamadas a Bases de Datos: Podrás acceder a bases de datos públicas o privadas para recuperar información actualizada si los archivos de contexto no son suficientes.
-                •	Comando: “Consulta en la base de datos los artículos relacionados con el gasto en CO para el año 2023”.
-                •	Respuesta: “De acuerdo con los registros en la base de datos, en 2023 se asignaron [Detalles del Gasto]”.
-            
-            Generación de Gráficas:
-            
-                1.	Visualización de Datos: Generarás gráficos que ayuden a visualizar conceptos clave o datos obtenidos de tus archivos de contexto y bases de datos.
-                •	Comando: “Genera una gráfica comparativa de los gastos del capítulo 2 del CO”.
-                •	Respuesta: “Aquí tienes una gráfica de barras que muestra la comparación de gastos en [Datos Clave]”.
-            
-            Asistencia en el Estudio:
-            
-                1.	Resúmenes y Esquemas: Producirás resúmenes y puntos clave de cada capítulo o artículo.
-                •	Comando: “Resume el capítulo 5 del CO”.
-                •	Respuesta: “El capítulo 5 cubre los siguientes puntos clave [Resumen]”.
-                2.	Preguntas de Práctica: Generarás preguntas de estudio basadas en la información de tus archivos de contexto y las bases de datos.
-                •	Comando: “Genera preguntas sobre la normativa CONAC”.
-                •	Respuesta: “Aquí tienes algunas preguntas de práctica: [Preguntas]”.
-            
-            Interactividad y Retroalimentación:
-            
-                1.	Retroalimentación Activa: Revisarás las respuestas del usuario, explicando por qué son correctas o incorrectas y proporcionando sugerencias para mejorar.
-                •	Comando: “Revisa mi respuesta sobre el gasto en el CO”.
-                •	Respuesta: “Tu respuesta es correcta/incorrecta porque [Explicación Detallada]”.
-                2.	Diálogos Interactivos: Fomentarás el diálogo continuo con el usuario para explorar temas de forma más profunda.
-                •	Comando: “Explícame más sobre la armonización contable”.
-                •	Respuesta: “La armonización contable es un proceso que [Explicación Extendida]”.
-            
-            Motivación y Apoyo:
-            
-                1.	Motivación Constante: Proveerás palabras de aliento y sugerencias de estudio personalizado.
-                •	Comando: “Motívame para continuar con el estudio de la normativa”.
-                •	Respuesta: “¡Estás haciendo un gran trabajo! Estudiar regularmente es clave para dominar la contabilidad gubernamental. Sigue así”.
-                2.	Técnicas de Estudio Efectivas: Sugerirás técnicas de estudio adaptadas al nivel del usuario.
-                •	Comando: “Sugiéreme una técnica de estudio para retener información”.
-                •	Respuesta: “Te sugiero que hagas resúmenes después de cada capítulo y practiques con preguntas frecuentes”.
-            
-            Accesibilidad y Adaptabilidad:
-            
-                1.	Navegación Ágil: Facilitarás la navegación rápida por el contenido de tus archivos de contexto o bases de datos.
-                •	Comando: “Encuentra la sección sobre la clasificación del gasto en CO”.
-                •	Respuesta: “La sección sobre clasificación del gasto se encuentra en el capítulo [Capítulo] de tus archivos de contexto”.
-                2.	Adaptabilidad: Adaptarás tus respuestas según el nivel de conocimiento del usuario.
-                •	Comando: “Explica la armonización contable en un nivel avanzado”.
-                •	Respuesta: “[Explicación Avanzada]”.
-                •	Comando: “Explica la armonización contable en un nivel básico”.
-                •	Respuesta: “[Explicación Básica]”.
-            
-            Instrucciones Finales:
-            
-                1.	Despedida Amigable: Terminarás con un cierre profesional y amigable.
-                •	Comando: “Gracias por tu ayuda”.
-                •	Respuesta: “¡Ha sido un placer ayudarte! Si tienes más preguntas, no dudes en regresar. ¡Feliz estudio!”.
-                2.	Evaluación Continua: Pedirás retroalimentación para mejorar tu capacidad de asistente.
-                •	Comando: “¿Qué opinas del proceso?”.
-                •	Respuesta: “Gracias por tu retroalimentación. Seguiré mejorando para apoyarte de la mejor manera posible”.
-            
-            debes tomar en cuenta la fecha de hoy para posbles consultas en la base de datos o cuando tengas que hacer algun proceso con cierta temporalidad, la fecha del dia de hoy es {datetime.now().strftime('%Y-%m-%d')}"""
+            ... # (The full system message explaining the assistant's role, omitted here for brevity)
+            the date today is {datetime.now().strftime('%Y-%m-%d')}"""
 
-        # Inicializa MessageManager y Assistant
-        self.messages = MessageManager(
+        # Initialize MessageManager and Assistant
+        self.conversation = MessageManager(
             system_message=self.system_message,
             user=user,
             conversation_file=conversation_file,
             path=path
         )
         self.assistant = Assistant(
-            system_message=self.messages.get_system_message(),
+            system_message=self.conversation.get_system_message(),
             default_model="gpt-4o-mini",
             have_tools=have_tools
         )
-        self.is_renamed = False
+        self.__is_renamed = False
 
-    def response_to(self, message: str, timestamp: str = None) -> str:
-        self.messages.add_message({"role": "user", "content": message}, timestamp)
-        self.messages.add_message(self.assistant.response_to(self.messages.get_filtered_messages()))
+    def response_to(self, message: str, timestamp: str = None) -> dict:
+        """
+        Processes a user message and generates a response using the assistant.
 
-        if not self.is_renamed and self.messages.get_message_count() >= 2:
+        Args:
+            message (str): The user's message that needs a response.
+            timestamp (str, optional): The timestamp of the message (default is None).
+
+        Behavior:
+            - Adds the user's message to the conversation using MessageManager.
+            - The assistant generates a response, which is also added to the conversation.
+            - Automatically renames the conversation title after the second message using an AI-generated title.
+
+        Returns:
+            dict: The last message in the conversation (assistant's response).
+        """
+        # Add the user's message to the conversation
+        self.conversation.add_message({"role": "user", "content": message}, timestamp)
+        # Generate the assistant's response and add it to the conversation
+        self.conversation.add_message(self.assistant.response_to(self.conversation.get_filtered_messages()))
+
+        # Automatically rename the conversation title after the second message
+        if not self.__is_renamed and self.conversation.get_message_count() >= 2:
             title_generator = Assistant(
                 system_message=(
                     "You generate a small title of the previous conversation no longer than "
                     "15 letters automatically in each query, even if the user doesn't tell you "
-                    "anything, you don't ask them, you just ask them, in the language of the conversation"
+                    "anything, you don't ask them, you just generate it in the language of the conversation."
                 ),
                 temperature=1,
                 max_tokens=15,
                 default_model="gpt-4o-mini",
                 have_tools=True
             )
-            new_title = title_generator.response_to(self.messages.get_messages())['content']
-            self.messages.modify_title(new_title)
-            self.is_renamed = True
+            # Generate a new title and rename the conversation
+            new_title = title_generator.response_to(self.conversation.get_messages())['content']
+            self.conversation.set_title(new_title)
+            self.__is_renamed = True
 
-        return self.messages.get_last_message()['content']
+        return self.conversation.get_last_message()

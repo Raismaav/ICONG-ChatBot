@@ -58,6 +58,7 @@ class MessageManager:
             self.user = user
             self.title = title
             self.timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
+            self.filename = os.path.join(self.path, f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json")
             # Generate a unique ID for the conversation using a hash of the system_message and timestamp
             hash_input = (system_message + self.timestamp).encode('utf-8')
             self.conversation_id = hashlib.sha256(hash_input).hexdigest()[:12]
@@ -70,13 +71,13 @@ class MessageManager:
                     "user": self.user,
                     "title": self.title,
                     "timestamp": self.timestamp,
+                    "filename": self.filename,
                     "system_message": self.system_message,
                     "messages": self.messages
                 }
             }
 
             # Create the JSON file with the title and ID in the filename
-            self.filename = os.path.join(self.path, f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json")
             with open(self.filename, 'w') as f:
                 json.dump(self.conversation, f, indent=2)
 
@@ -110,7 +111,7 @@ class MessageManager:
         with open(self.filename, 'w') as f:
             json.dump(self.conversation, f, indent=2)
 
-    def modify_system_message(self, new_system_message: str):
+    def set_system_message(self, new_system_message: str):
         """
         Modifies the system message (context) of the conversation.
 
@@ -124,7 +125,7 @@ class MessageManager:
         with open(self.filename, 'w') as f:
             json.dump(self.conversation, f, indent=2)
 
-    def modify_title(self, new_title: str):
+    def set_title(self, new_title: str):
         """
         Modifies the title of the conversation.
 
@@ -139,6 +140,7 @@ class MessageManager:
 
         # Create the JSON file with the new title and ID in the filename
         self.filename = os.path.join(self.path, f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json")
+        self.conversation['conversation']['filename'] = new_title
         with open(self.filename, 'w') as f:
             json.dump(self.conversation, f, indent=2)
 
@@ -150,6 +152,24 @@ class MessageManager:
             str: The system message or context of the conversation.
         """
         return self.system_message
+
+    def get_filename(self) -> str:
+        """
+        Returns the filename where the conversation is stored.
+
+        Returns:
+            str: The filename of the JSON file.
+        """
+        return self.filename
+
+    def get_conversation(self) -> dict:
+        """
+        Returns the entire conversation object.
+
+        Returns:
+            dict: The full conversation object containing id, user, title, timestamp, system_message, and messages.
+        """
+        return self.conversation
 
     def get_messages(self) -> list:
         """
