@@ -3,7 +3,11 @@ from assistant import Assistant
 from datetime import datetime
 
 class Chat:
-    def __init__(self, user: str = None, conversation_file: str = None, path: str = 'conversations/'):
+    def __init__(self, user: str = None, have_tools=False, conversation_file: str = None, path: str = 'conversations/'):
+        # Cambiar el path si el usuario no es nulo
+        if user is not None:
+            path = f"{path}/{user.lower().replace(' ', '_')}"
+
         # Define el mensaje del sistema
         self.system_message = f"""
             Rol
@@ -112,18 +116,18 @@ class Chat:
         self.assistant = Assistant(
             system_message=self.messages.get_system_message(),
             default_model="gpt-4o-mini",
-            have_tools=True
+            have_tools=have_tools
         )
         self.is_renamed = False
 
-    def response_to(self, message: str) -> str:
-        self.messages.add_message({"role": "user", "content": message})
+    def response_to(self, message: str, timestamp: str = None) -> str:
+        self.messages.add_message({"role": "user", "content": message}, timestamp)
         self.messages.add_message(self.assistant.response_to(self.messages.get_filtered_messages()))
 
         if not self.is_renamed and self.messages.get_message_count() >= 2:
             title_generator = Assistant(
                 system_message=(
-                    "You generate a title of the previous conversation no longer than "
+                    "You generate a small title of the previous conversation no longer than "
                     "15 letters automatically in each query, even if the user doesn't tell you "
                     "anything, you don't ask them, you just ask them, in the language of the conversation"
                 ),

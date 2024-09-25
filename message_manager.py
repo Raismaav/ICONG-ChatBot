@@ -80,7 +80,7 @@ class MessageManager:
             with open(self.filename, 'w') as f:
                 json.dump(self.conversation, f, indent=2)
 
-    def add_message(self, message_dict: dict):
+    def add_message(self, message_dict: dict, timestamp: str = None):
         """
         Adds a new message to the conversation.
 
@@ -88,11 +88,11 @@ class MessageManager:
             message_dict (dict): Dictionary containing:
                 - role (str): The role of the sender (e.g., 'user' or 'assistant').
                 - content (str): The content of the message.
+                - timestamp (str, optional): The timestamp of the message (default is None).
         """
         role = message_dict.get('role')
         content = message_dict.get('content')
-        timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
-
+        timestamp = timestamp or datetime.datetime.utcnow().isoformat() + 'Z'
         # Generate a unique ID for the message using a hash of the content and timestamp
         hash_input = (content + timestamp).encode('utf-8')
         message_id = hashlib.sha256(hash_input).hexdigest()[:12]
