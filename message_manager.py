@@ -51,13 +51,13 @@ class MessageManager:
                         self.conversation = json.load(f)
                 except json.JSONDecodeError as e:
                     raise ValueError(f"Error decoding JSON from file '{conversation_file}': {e}")
-                self.conversation_id = self.conversation['conversation']['id']
-                self.user = self.conversation['conversation']['user']
-                self.title = self.conversation['conversation']['title']
-                self.timestamp = self.conversation['conversation']['timestamp']
-                self.system_message = self.conversation['conversation']['system_message']
+                self.conversation_id = self.conversation['conversation']['header']['id']
+                self.user = self.conversation['conversation']['header']['user']
+                self.title = self.conversation['conversation']['header']['title']
+                self.timestamp = self.conversation['conversation']['header']['timestamp']
+                self.system_message = system_message or self.conversation['conversation']['system_message']
                 self.messages = self.conversation['conversation']['messages']
-                self.filename = self.conversation['conversation']['filename']
+                self.filename = self.conversation['conversation']['header']['filename']
                 self.full_filepath = os.path.join(self.path, self.filename)
             else:
                 raise FileNotFoundError(f"The file '{conversation_file}' does not exist.")
@@ -79,11 +79,13 @@ class MessageManager:
             # Build the conversation object
             self.conversation = {
                 "conversation": {
-                    "id": self.conversation_id,
-                    "user": self.user,
-                    "title": self.title,
-                    "timestamp": self.timestamp,
-                    "filename": self.filename,
+                    "header": {
+                        "id": self.conversation_id,
+                        "user": self.user,
+                        "title": self.title,
+                        "timestamp": self.timestamp,
+                        "filename": self.filename
+                    },
                     "system_message": self.system_message,
                     "messages": self.messages
                 }
@@ -168,8 +170,8 @@ class MessageManager:
         self.title = new_title.replace('.', '')
         self.filename = f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json"
         self.full_filepath = os.path.join(self.path, self.filename)
-        self.conversation['conversation']['title'] = self.title
-        self.conversation['conversation']['filename'] = self.filename
+        self.conversation['conversation']['header']['title'] = self.title
+        self.conversation['conversation']['header']['filename'] = self.filename
 
         # Rename the file instead of deleting and recreating
         try:
@@ -207,7 +209,7 @@ class MessageManager:
         Returns the entire conversation object.
 
         Returns:
-            dict: The full conversation object containing id, user, title, timestamp, system_message, and messages.
+            dict: The full conversation object containing header, system_message, and messages.
         """
         return self.conversation
 
