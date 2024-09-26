@@ -74,7 +74,7 @@ class Chat:
         self.conversation.add_message(self.assistant.response_to(self.conversation.get_filtered_messages()))
 
         # Automatically rename the conversation title after the second message
-        if not self.__is_renamed and self.conversation.get_message_count() >= 2:
+        if not self.__is_renamed and self.conversation.title == 'New conversation' and self.conversation.get_message_count() >= 2:
             self.generate_and_set_title()
 
         return self.conversation.get_last_message()
