@@ -31,16 +31,16 @@ class Chat:
             - Initializes MessageManager to manage conversation storage and Assistant to handle AI-based responses.
         """
         if user is not None:
-            path = f"{path}/{user.lower().replace(' ', '_')}"
+            path = f"{path}{user.lower().replace(' ', '_')}/"
 
         # Define the system message with details about the assistant's role and focus
-        self.system_message = f"""
+        system_message = f"""
             ... # (The full system message explaining the assistant's role, omitted here for brevity)
             the date today is {datetime.now().strftime('%Y-%m-%d')}"""
 
         # Initialize MessageManager and Assistant
         self.conversation = MessageManager(
-            system_message=self.system_message,
+            system_message=system_message,
             user=user,
             conversation_file=conversation_file,
             path=path
@@ -75,20 +75,26 @@ class Chat:
 
         # Automatically rename the conversation title after the second message
         if not self.__is_renamed and self.conversation.get_message_count() >= 2:
-            title_generator = Assistant(
-                system_message=(
-                    "You generate a small title of the previous conversation no longer than "
-                    "15 letters automatically in each query, even if the user doesn't tell you "
-                    "anything, you don't ask them, you just generate it in the language of the conversation."
-                ),
-                temperature=1,
-                max_tokens=15,
-                default_model="gpt-4o-mini",
-                have_tools=True
-            )
-            # Generate a new title and rename the conversation
-            new_title = title_generator.response_to(self.conversation.get_messages())['content']
-            self.conversation.set_title(new_title)
-            self.__is_renamed = True
+            self.generate_and_set_title()
 
         return self.conversation.get_last_message()
+
+    def generate_and_set_title(self):
+        """
+        Generates a new title for the conversation and sets it.
+        """
+        title_generator = Assistant(
+            system_message=(
+                "You generate a small title of the previous conversation no longer than "
+                "15 letters automatically in each query, even if the user doesn't tell you "
+                "anything, you don't ask them, you just generate it in the language of the conversation."
+            ),
+            temperature=1,
+            max_tokens=15,
+            default_model="gpt-4o-mini",
+            have_tools=True
+        )
+        # Generate a new title and rename the conversation
+        new_title = title_generator.response_to(self.conversation.get_messages())['content']
+        self.conversation.set_title(new_title)
+        self.__is_renamed = True
