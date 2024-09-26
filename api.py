@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List
-import os
+from typing import Optional
 import json
 from chat import Chat
+from message_manager import MessageManager
 
 app = FastAPI()
 
@@ -139,6 +139,24 @@ async def chat_messages(user: str, conversation_file: str):
         messages = chat.conversation.get_conversation()
 
         return messages
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail='Archivo de conversación no encontrado')
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail='Formato de archivo de conversación inválido')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get('/chat/headers')
+async def chat_headers(user: str):
+    try:
+        if not user:
+            raise HTTPException(status_code=400, detail='user es obligatorio')
+
+        # Obtener las conversaciones
+        conversatios = MessageManager.get_headers_from_user(user)
+
+        return {'headers': conversatios}
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Archivo de conversación no encontrado')

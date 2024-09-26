@@ -251,3 +251,28 @@ class MessageManager:
             int: The number of messages.
         """
         return len(self.messages)
+
+    @staticmethod
+    def get_headers_from_user(user: str, path: str = 'conversations/'):
+        if user:
+            path = f"{path}{user.lower().replace(' ', '_')}/"
+        # Verifica si el directorio existe
+        if os.path.exists(path) and os.path.isdir(path):
+            headers = []
+            # Itera sobre los archivos JSON en el directorio
+            for file in os.listdir(path):
+                full_path = os.path.join(path, file)
+                if os.path.isfile(full_path) and file.endswith('.json'):
+                    # Carga el archivo JSON y extrae el header
+                    try:
+                        with open(full_path, 'r') as f:
+                            conversation = json.load(f)
+                            header = conversation.get('conversation', {}).get('header', {})
+                            headers.append(header)
+                    except (json.JSONDecodeError, IOError):
+                        # Si ocurre algún error al cargar el archivo, lo omite
+                        continue
+            return headers
+        else:
+            # Si el directorio no existe, retorna una lista vacía
+            return []
