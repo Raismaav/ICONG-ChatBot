@@ -9,14 +9,14 @@ def calcular_hash_pagina(contenido):
 
 url = "https://www.conac.gob.mx/es/CONAC/Normatividad_Vigente"
 carpeta_destino = "context_files"
-hash_file = "ultimo_hash.txt"
+hash_file = "generated/ultimo_hash.txt"
 
 response = requests.get(url)
 
 if response.status_code == 200:
     contenido_html = response.text
     hash_actual = calcular_hash_pagina(contenido_html)
-    fecha_actual = datetime.utcnow().isoformat() + 'Z'
+    fecha_actual = datetime.now().isoformat() + 'Z'
 
     if os.path.exists(hash_file):
         with open(hash_file, "r") as f:
@@ -46,7 +46,12 @@ if response.status_code == 200:
     for link in links:
         href = link.get("href")
         if href and href.endswith(".pdf"):
-            pdf_url = href if href.startswith("http") else url + href
+
+            if not href.startswith("https://www.conac.gob.mx/"):
+                pdf_url = "https://www.conac.gob.mx/" + href.lstrip('/')
+            else:
+                pdf_url = href
+
             pdf_response = requests.get(pdf_url)
             if pdf_response.status_code == 200:
                 pdf_name = os.path.join(carpeta_destino, os.path.basename(pdf_url))
