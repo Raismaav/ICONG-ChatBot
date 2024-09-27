@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import requests
 from bs4 import BeautifulSoup
 import os
@@ -16,7 +16,7 @@ response = requests.get(url)
 if response.status_code == 200:
     contenido_html = response.text
     hash_actual = calcular_hash_pagina(contenido_html)
-    fecha_actual = datetime.now().isoformat() + 'Z'
+    fecha_actual = datetime.now(timezone.utc).isoformat()
 
     if os.path.exists(hash_file):
         with open(hash_file, "r") as f:
@@ -24,7 +24,7 @@ if response.status_code == 200:
             hash_guardado = lineas[0].strip()
             fecha_guardada = lineas[1].strip()
 
-        fecha_guardada_dt = datetime.strptime(fecha_guardada[:-1], "%Y-%m-%dT%H:%M:%S.%f")
+        fecha_guardada_dt = datetime.strptime(fecha_guardada[:-6], "%Y-%m-%dT%H:%M:%S.%f")
 
         if (datetime.now() - fecha_guardada_dt).days < 1:
             print("Los documentos ya fueron actualizados recientemente. No se realizarán nuevas descargas.")
