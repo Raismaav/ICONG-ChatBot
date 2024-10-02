@@ -1,3 +1,4 @@
+from system_message import system_message
 from message_manager import MessageManager
 from assistant import Assistant
 from datetime import datetime
@@ -5,25 +6,27 @@ from datetime import datetime
 
 class Chat:
     """
-    Manages a conversation with an AI assistant, using MessageManager to store and manage the conversation
+    Manages a conversation with an AI assistant, using MessageManager to store and manage the conversation,
     and Assistant to generate responses based on a system message related to governmental accounting in Mexico.
 
     Attributes:
-        system_message: System message defining the assistant's role and behavior.
-        conversation: An instance of MessageManager that handles storing and managing conversation messages.
-        assistant: An instance of Assistant responsible for generating AI responses.
-        __is_renamed: A flag indicating whether the conversation title has been automatically renamed after two messages.
+        system_message (str): System message defining the assistant's role and behavior.
+        conversation (MessageManager): An instance of MessageManager that handles storing and managing conversation messages.
+        assistant (Assistant): An instance of Assistant responsible for generating AI responses.
+        __is_renamed (bool): A flag indicating whether the conversation title has been automatically renamed after two messages.
     """
 
-    def __init__(self, user: str = None, have_tools=False, conversation_file: str = None, path: str = 'conversations/'):
+    def __init__(self, user: str = None, have_tools=False, conversation_file: str = None,
+                 path: str = 'conversations/', timestamp: str | datetime = None):
         """
         Initializes the Chat instance with user-specific parameters, a system message, MessageManager, and Assistant.
 
         Args:
             user (str, optional): The user associated with the conversation (default is None).
             have_tools (bool, optional): Indicates whether the assistant has tools available (default is False).
-            conversation_file (str, optional): Path to an existing conversation file (default is None).
+            conversation_file (str , optional): Path to an existing conversation file (default is None).
             path (str, optional): Directory where conversation files are stored (default is 'conversations/').
+            timestamp (str | datetime, optional): Timestamp of the message or conversation (default is None).
 
         Behavior:
             - If a user is specified, the path is customized for that user.
@@ -33,17 +36,13 @@ class Chat:
         if user is not None:
             path = f"{path}{user.lower().replace(' ', '_')}/"
 
-        # Define the system message with details about the assistant's role and focus
-        system_message = f"""
-            ... # (The full system message explaining the assistant's role, omitted here for brevity)
-            the date today is {datetime.now().strftime('%Y-%m-%d')}"""
-
         # Initialize MessageManager and Assistant
         self.conversation = MessageManager(
             system_message=system_message,
             user=user,
             conversation_file=conversation_file,
-            path=path
+            path=path,
+            timestamp=timestamp
         )
         self.assistant = Assistant(
             system_message=self.conversation.get_system_message(),
@@ -52,13 +51,13 @@ class Chat:
         )
         self.__is_renamed = False
 
-    def response_to(self, message: str, timestamp: str = None) -> dict:
+    def response_to(self, message: str, timestamp: str | datetime = None) -> dict:
         """
         Processes a user message and generates a response using the assistant.
 
         Args:
             message (str): The user's message that needs a response.
-            timestamp (str, optional): The timestamp of the message (default is None).
+            timestamp (str | datetime, optional): The timestamp of the message (default is None).
 
         Behavior:
             - Adds the user's message to the conversation using MessageManager.
@@ -82,6 +81,10 @@ class Chat:
     def generate_and_set_title(self):
         """
         Generates a new title for the conversation and sets it.
+
+        Behavior:
+            - Uses the Assistant to generate a short title based on the conversation.
+            - Updates the conversation title if the conditions are met.
         """
         title_generator = Assistant(
             system_message=(
