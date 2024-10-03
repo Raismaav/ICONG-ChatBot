@@ -62,7 +62,7 @@ async def chat_respond(request: ChatRespondRequest):
         if request.timestamp:
             try:
                 # Parse and convert the timestamp to a valid date-time format
-                parsed_timestamp = parser.isoparse(request.timestamp)
+                parsed_timestamp = parser.isoparse(request.timestamp).isoformat()
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid date format")
         else:
@@ -73,11 +73,11 @@ async def chat_respond(request: ChatRespondRequest):
             user=request.user,
             have_tools=request.have_tools,
             conversation_file=request.conversation_file,
-            timestamp=f"{parsed_timestamp}"  # Use parsed timestamp or None
+            timestamp=parsed_timestamp  # Use parsed timestamp or None
         )
 
         # Process the message and obtain the response
-        response = chat.response_to(request.message, f"{parsed_timestamp}")
+        response = chat.response_to(request.message, parsed_timestamp)
 
         return response
 
