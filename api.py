@@ -115,7 +115,7 @@ async def chat_set_title(request: ChatSetTitleRequest):
         )
 
         # Set the new title
-        chat.set_title(request.new_title)
+        chat.conversation.set_title(request.new_title)
 
         return {'message': 'Title updated successfully'}
 
