@@ -42,6 +42,9 @@ class MessageManager:
         if not os.path.exists(path):
             os.makedirs(path)  # Create directory if it does not exist
 
+        if user is not None:
+            path = f"{path}{user.lower().replace(' ', '_')}/"
+
         self.path = path
 
         # Load an existing conversation or create a new one
@@ -224,6 +227,15 @@ class MessageManager:
         """
         return self.conversation
 
+    def get_header(self) -> dict:
+        """
+        Returns the header information of the current conversation.
+
+        Returns:
+            dict: The header containing id, user, title, timestamp, and filename of the conversation.
+        """
+        return self.conversation['conversation']['header']
+
     def get_messages(self) -> list:
         """
         Returns the full list of messages in the conversation.
@@ -264,7 +276,7 @@ class MessageManager:
         return len(self.messages)
 
     @staticmethod
-    def get_headers_from_user(user: str, path: str = 'conversations/') -> list:
+    def get_headers_from(user: str, path: str = 'conversations/') -> list:
         """
         Retrieves the headers of all conversations associated with a specific user.
 

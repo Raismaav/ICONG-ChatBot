@@ -29,12 +29,9 @@ class Chat:
             timestamp (str | datetime, optional): Timestamp of the message or conversation (default is None).
 
         Behavior:
-            - If a user is specified, the path is customized for that user.
-            - The system message defines the assistant as an expert in governmental accounting, focusing on the laws and regulations in Mexico, with an emphasis on Jalisco's local laws.
+            - If a user is specified, the path is customized for that user.50
             - Initializes MessageManager to manage conversation storage and Assistant to handle AI-based responses.
         """
-        if user is not None:
-            path = f"{path}{user.lower().replace(' ', '_')}/"
 
         # Initialize MessageManager and Assistant
         self.conversation = MessageManager(

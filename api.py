@@ -8,7 +8,6 @@ import json
 
 app = FastAPI()
 
-
 # Data models for requests
 class ChatRespondRequest(BaseModel):
     """
@@ -52,7 +51,7 @@ async def chat_respond(request: ChatRespondRequest):
         request (ChatRespondRequest): Request object containing user, message, tools, conversation file, and timestamp.
 
     Returns:
-        dict: The assistant's response.
+        dict: The assistant's response and the conversation header.
 
     Raises:
         HTTPException: If the conversation file is not found, or if there are JSON or general processing errors.
@@ -77,9 +76,8 @@ async def chat_respond(request: ChatRespondRequest):
         )
 
         # Process the message and obtain the response
-        response = chat.response_to(request.message, parsed_timestamp)
-
-        return response
+        message = chat.response_to(request.message, parsed_timestamp)
+        return {"header": chat.conversation.get_header(), "message": message}
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Conversation file not found')
@@ -99,7 +97,7 @@ async def chat_set_title(request: ChatSetTitleRequest):
         request (ChatSetTitleRequest): Request object containing user, new title, and conversation file.
 
     Returns:
-        dict: A success message if the title was updated.
+        dict: A success message and the updated conversation header.
 
     Raises:
         HTTPException: If the conversation file is missing, not found, or contains errors.
@@ -109,15 +107,15 @@ async def chat_set_title(request: ChatSetTitleRequest):
             raise HTTPException(status_code=400, detail='conversation_file is required')
 
         # Load the Chat instance
-        chat = Chat(
+        conversation = MessageManager(
             user=request.user,
             conversation_file=request.conversation_file
         )
 
         # Set the new title
-        chat.set_title(request.new_title)
+        conversation.set_title(request.new_title)
 
-        return {'message': 'Title updated successfully'}
+        return {'detail': 'Title updated successfully', "header": conversation.get_header()}
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Conversation file not found')
@@ -150,15 +148,13 @@ async def chat_last_message(user: str, conversation_file: str):
             raise HTTPException(status_code=400, detail='user is required')
 
         # Load the Chat instance
-        chat = Chat(
+        conversation = MessageManager(
             user=user,
             conversation_file=conversation_file
         )
 
         # Get the last message
-        last_message = chat.conversation.get_last_message()
-
-        return last_message
+        return conversation.get_last_message()
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Conversation file not found')
@@ -191,15 +187,13 @@ async def chat_messages(user: str, conversation_file: str):
             raise HTTPException(status_code=400, detail='user is required')
 
         # Load the Chat instance
-        chat = Chat(
+        conversation = MessageManager(
             user=user,
             conversation_file=conversation_file
         )
 
         # Get all messages
-        messages = chat.conversation.get_messages()
-
-        return messages
+        return conversation.get_messages()
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Conversation file not found')
@@ -232,15 +226,13 @@ async def chat_conversation(user: str, conversation_file: str):
             raise HTTPException(status_code=400, detail='user is required')
 
         # Load the Chat instance
-        chat = Chat(
+        conversation = MessageManager(
             user=user,
             conversation_file=conversation_file
         )
 
         # Get the conversation
-        conversation = chat.conversation.get_conversation()
-
-        return conversation
+        return conversation.get_conversation()
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Conversation file not found')
@@ -260,7 +252,7 @@ async def chat_headers(user: str):
         user (str): The user whose conversation headers should be retrieved.
 
     Returns:
-        dict: A list of conversation headers for the user.
+        list: A list of conversation headers for the user.
 
     Raises:
         HTTPException: If the user information is missing or if there are errors in processing the headers.
@@ -270,9 +262,7 @@ async def chat_headers(user: str):
             raise HTTPException(status_code=400, detail='user is required')
 
         # Get conversation headers
-        headers = MessageManager.get_headers_from_user(user)
-
-        return {'headers': headers}
+        return MessageManager.get_headers_from(user)
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Conversation file not found')
