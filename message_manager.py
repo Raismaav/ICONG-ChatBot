@@ -15,6 +15,7 @@ class MessageManager:
         user: The user associated with the conversation.
         title: Title of the conversation.
         timestamp: Timestamp of when the conversation was created (in ISO 8601 format).
+        last_modified: Timestamp of the last modification to the conversation (in ISO 8601 format).
         system_message: Initial system message or context for the conversation.
         messages: List of messages in the conversation, each with role, content, timestamp, and a unique ID.
         filename: The JSON file where the conversation is stored.
@@ -67,6 +68,7 @@ class MessageManager:
                 self.user = self.conversation['conversation']['header']['user']
                 self.title = self.conversation['conversation']['header']['title']
                 self.timestamp = self.conversation['conversation']['header']['timestamp']
+                self.last_modified = self.conversation['conversation']['header']['last_modified']
                 self.system_message = system_message or self.conversation['conversation']['system_message']
                 self.messages = self.conversation['conversation']['messages']
                 self.filename = self.conversation['conversation']['header']['filename']
@@ -82,6 +84,7 @@ class MessageManager:
             self.user = user
             self.title = title.replace('.', '')
             self.timestamp = timestamp or datetime.now(timezone.utc).isoformat()
+            self.last_modified = self.timestamp
             # Generate a unique ID for the conversation using a hash of the system_message and timestamp
             hash_input = (system_message + self.timestamp).encode('utf-8')
             self.conversation_id = hashlib.md5(hash_input).hexdigest()[:12]
@@ -97,6 +100,7 @@ class MessageManager:
                         "user": self.user,
                         "title": self.title,
                         "timestamp": self.timestamp,
+                        "last_modified": self.last_modified,
                         "filename": self.filename
                     },
                     "system_message": self.system_message,
@@ -124,6 +128,7 @@ class MessageManager:
         Raises:
             ValueError: If 'role' or 'content' are missing or not strings.
         """
+        timestamp = timestamp or datetime.now(timezone.utc).isoformat()
         role = message_dict.get('role')
         content = message_dict.get('content')
 
@@ -132,7 +137,6 @@ class MessageManager:
         if not isinstance(content, str):
             raise ValueError("'content' must be a string.")
 
-        timestamp = timestamp or datetime.now(timezone.utc).isoformat()
         # Generate a unique ID for the message using a hash of the content and timestamp
         hash_input = (content + timestamp).encode('utf-8')
         message_id = hashlib.md5(hash_input).hexdigest()[:12]
@@ -145,6 +149,8 @@ class MessageManager:
         }
         self.messages.append(message)
         self.conversation['conversation']['messages'] = self.messages
+        self.last_modified = timestamp
+        self.conversation['conversation']['header']['last_modified'] = self.last_modified
 
         # Update the JSON file
         try:
@@ -160,8 +166,10 @@ class MessageManager:
         Args:
             new_system_message (str): The new system message or context.
         """
+        self.last_modified = datetime.now(timezone.utc).isoformat()
         self.system_message = new_system_message
         self.conversation['conversation']['system_message'] = new_system_message
+        self.conversation['conversation']['header']['last_modified'] = self.last_modified
 
         # Update the JSON file
         try:
@@ -180,12 +188,14 @@ class MessageManager:
         Raises:
             OSError: If there is an error renaming the file.
         """
+        self.last_modified = datetime.now(timezone.utc).isoformat()
         old_full_filepath = self.full_filepath
         self.title = new_title.replace('.', '')
         self.filename = f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json"
         self.full_filepath = os.path.join(self.path, self.filename)
         self.conversation['conversation']['header']['title'] = self.title
         self.conversation['conversation']['header']['filename'] = self.filename
+        self.conversation['conversation']['header']['last_modified'] = self.last_modified
 
         # Rename the file
         try:
@@ -232,7 +242,7 @@ class MessageManager:
         Returns the header information of the current conversation.
 
         Returns:
-            dict: The header containing id, user, title, timestamp, and filename of the conversation.
+            dict: The header containing id, user, title, timestamp, last_modified, and filename of the conversation.
         """
         return self.conversation['conversation']['header']
 
