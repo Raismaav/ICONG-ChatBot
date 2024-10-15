@@ -41,6 +41,18 @@ class ChatSetTitleRequest(BaseModel):
     conversation_file: str
 
 
+class ChatDeleteRequest(BaseModel):
+    """
+    Model for the /chat/delete_conversation request.
+
+    Attributes:
+        user (str): The user whose conversation is being deleted.
+        conversation_file (str): The filename of the conversation to be deleted.
+    """
+    user: str
+    conversation_file: str
+
+
 # Endpoint for /chat/respond
 @app.post('/chat/respond')
 async def chat_respond(request: ChatRespondRequest):
@@ -268,5 +280,37 @@ async def chat_headers(user: str):
         raise HTTPException(status_code=404, detail='Conversation file not found')
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail='Invalid conversation file format')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint for /chat/delete_conversation
+@app.delete('/chat/delete')
+async def delete(request: ChatDeleteRequest):
+    """
+    Handles the /chat/delete_conversation endpoint, deleting a specific conversation for a user.
+
+    Args:
+        request (ChatDeleteRequest): Request object containing user and conversation file.
+
+    Returns:
+        dict: A success message if the conversation was deleted successfully.
+
+    Raises:
+        HTTPException: If the conversation file is not found or if there are errors during deletion.
+    """
+    try:
+        if not request.conversation_file:
+            raise HTTPException(status_code=400, detail='conversation_file is required')
+        if not request.user:
+            raise HTTPException(status_code=400, detail='user is required')
+
+        # Delete the conversation
+        if MessageManager.delete_conversation(request.user, request.conversation_file):
+            return {'detail': 'Conversation deleted successfully'}
+        else:
+            raise HTTPException(status_code=500, detail='Failed to delete the conversation')
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail='Conversation file not found')
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

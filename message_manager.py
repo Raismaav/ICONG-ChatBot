@@ -40,11 +40,12 @@ class MessageManager:
             ValueError: If conversation_file is not a valid JSON file or is missing.
             FileNotFoundError: If the specified conversation file does not exist.
         """
-        if not os.path.exists(path):
-            os.makedirs(path)  # Create directory if it does not exist
 
         if user is not None:
             path = f"{path}{user.lower().replace(' ', '_')}/"
+
+        if not os.path.exists(path):
+            os.makedirs(path)  # Create directory if it does not exist
 
         self.path = path
 
@@ -318,3 +319,58 @@ class MessageManager:
                         continue
             return headers
         return []
+
+    @staticmethod
+    def delete_conversation(user: str, conversation_file: str, path: str = 'conversations/') -> bool:
+        """
+        Deletes a specific conversation associated with a user.
+
+        Args:
+            user (str): The user whose conversation is being deleted.
+            conversation_file (str): The filename of the conversation to be deleted.
+            path (str, optional): The directory where conversation files are stored (default is 'conversations/').
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+        """
+        if user:
+            path = f"{path}{user.lower().replace(' ', '_')}/"
+
+        full_conversation_file = os.path.join(path, conversation_file)
+
+        if os.path.exists(full_conversation_file) and os.path.isfile(full_conversation_file):
+            try:
+                os.remove(full_conversation_file)
+                return True
+            except (OSError, IOError) as e:
+                print(f"Error deleting conversation file '{conversation_file}': {e}")
+                return False
+        return False
+
+    @staticmethod
+    def delete_all_conversations(user: str, path: str = 'conversations/') -> bool:
+        """
+        Deletes all conversations associated with a specific user, but keeps the user's directory.
+
+        Args:
+            user (str): The user whose conversations are being deleted.
+            path (str, optional): The directory where conversation files are stored (default is 'conversations/').
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+        """
+        if user:
+            path = f"{path}{user.lower().replace(' ', '_')}/"
+
+        if os.path.exists(path) and os.path.isdir(path):
+            try:
+                # Delete all files in the user's directory
+                for file in os.listdir(path):
+                    full_path = os.path.join(path, file)
+                    if os.path.isfile(full_path):
+                        os.remove(full_path)
+                return True
+            except (OSError, IOError) as e:
+                print(f"Error deleting conversation files: {e}")
+                return False
+        return False
