@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from message_manager import MessageManager
 from pydantic import BaseModel
@@ -60,20 +61,28 @@ async def chat_respond(request: ChatRespondRequest):
     Handles the /chat/respond endpoint, processing a user message and generating a response from the assistant.
 
     Args:
-        request (ChatRespondRequest): Request object containing user, message, tools, conversation file, and timestamp.
+        request (ChatRespondRequest): Request object containing user information, the message content, optional tool access,
+                                      conversation file path, and an optional timestamp.
 
     Returns:
-        dict: The assistant's response and the conversation header.
+        dict: A dictionary containing the assistant's response and the conversation header.
 
     Raises:
-        HTTPException: If the conversation file is not found, or if there are JSON or general processing errors.
+        HTTPException: Raised under the following conditions:
+            - If the conversation file is not found, with a 404 status code.
+            - If the conversation file format is invalid JSON, with a 400 status code.
+            - If there is an invalid date format in the timestamp, with a 400 status code.
+            - For any other exceptions, with a 500 status code.
     """
     try:
         # Process and validate the timestamp if provided
         if request.timestamp:
             try:
-                # Parse and convert the timestamp to a valid date-time format
-                parsed_timestamp = parser.isoparse(request.timestamp).isoformat()
+                # Attempt to parse the timestamp in ISO format or fallback format "%Y%m%d%H%M%S%f"
+                try:
+                    parsed_timestamp = parser.isoparse(request.timestamp).isoformat()
+                except ValueError:
+                    parsed_timestamp = datetime.strptime(request.timestamp, "%Y%m%d%H%M%S%f").isoformat()
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid date format")
         else:
