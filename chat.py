@@ -1,4 +1,3 @@
-from system_message import system_message
 from message_manager import MessageManager
 from assistant import Assistant
 from datetime import datetime
@@ -35,7 +34,6 @@ class Chat:
 
         # Initialize MessageManager and Assistant
         self.conversation = MessageManager(
-            system_message=system_message,
             user=user,
             conversation_file=conversation_file,
             path=path,

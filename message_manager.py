@@ -1,3 +1,4 @@
+from system_message import system_message
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -22,7 +23,7 @@ class MessageManager:
         full_filepath: Full path of the JSON file storing the conversation.
     """
 
-    def __init__(self, system_message: str = None, user: str = None, title: str = 'New conversation',
+    def __init__(self, system_message: str = system_message, user: str = None, title: str = 'New conversation',
                  timestamp: str | datetime = None, conversation_file: str = None, path: str = 'conversations/'):
         """
         Initializes a new conversation or loads an existing one from a JSON file.
@@ -118,7 +119,7 @@ class MessageManager:
 
     def add_message(self, message_dict: dict, timestamp: str | datetime = None):
         """
-        Adds a new message to the conversation.
+        Adds a new message to the conversation and updates the last_modified timestamp.
 
         Args:
             message_dict (dict): Dictionary containing:
@@ -162,7 +163,7 @@ class MessageManager:
 
     def set_system_message(self, new_system_message: str):
         """
-        Updates the system message (context) of the conversation.
+        Updates the system message (context) of the conversation and the last_modified timestamp.
 
         Args:
             new_system_message (str): The new system message or context.
@@ -181,7 +182,7 @@ class MessageManager:
 
     def set_title(self, new_title: str):
         """
-        Modifies the title of the conversation.
+        Modifies the title of the conversation and updates the last_modified timestamp.
 
         Args:
             new_title (str): The new title of the conversation.
@@ -213,12 +214,13 @@ class MessageManager:
 
     def get_system_message(self) -> str:
         """
-        Retrieves the current system message of the conversation.
+        Retrieves the current system message of the conversation, appending the current date.
 
         Returns:
-            str: The system message or context of the conversation.
+            str: The system message or context of the conversation, followed by a note with the current date.
+                 This date is provided as a reminder for time-sensitive processes or database queries.
         """
-        return self.system_message + datetime.now().strftime('%Y-%m-%d')
+        return self.system_message + f" Debes tomar en cuenta la fecha de hoy para posibles consultas en la base de datos o cuando tengas que hacer algún proceso con cierta temporalidad, la fecha del día de hoy es {datetime.now().strftime('%Y-%m-%d')}"
 
     def get_filename(self) -> str:
         """

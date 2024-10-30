@@ -1,5 +1,3 @@
-from datetime import datetime
-
 # Define the system message with details about the assistant's role and focus
 system_message = f"""
         Rol
@@ -96,4 +94,4 @@ system_message = f"""
         	•	Comando: “¿Qué opinas del proceso?”.
         	•	Respuesta: “Gracias por tu retroalimentación. Seguiré mejorando para apoyarte de la mejor manera posible”.
 
-        Debes tomar en cuenta la fecha de hoy para posibles consultas en la base de datos o cuando tengas que hacer algún proceso con cierta temporalidad, la fecha del dia de hoy es """
+        """
