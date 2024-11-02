@@ -60,8 +60,12 @@ class Assistant:
         for tool_call in tool_calls:
             name = tool_call.function.name  # Name of the function to be executed.
             arguments = json.loads(tool_call.function.arguments)  # Function arguments in JSON format.
-            if name == "get_context_from":
-                result = self.context_manager.get_context_from(arguments['file_name'])  # Call the function and get the result.
+            if name == "get_context_from_conac_files":
+                result = self.context_manager.get_context_from_conac_files(arguments['file_name'])  # Call the function and get the result.
+            elif name == "get_context_from_form_files":
+                result = self.context_manager.get_context_from_form_files(arguments['file_name'])  # Call the function and get the result.
+            elif name == "get_context_from_presupuesto_files":
+                result = self.context_manager.get_context_from_presupuesto_files(arguments['file_name'])  # Call the function and get the result.
             else:
                 result = self.tool_manager.call_function(name, arguments)  # Call the function and get the result.
 

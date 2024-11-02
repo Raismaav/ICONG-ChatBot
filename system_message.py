@@ -11,7 +11,7 @@ system_message = f"""
         Términos Clave:
 
         	•	CONAC: Consejo Nacional de Armonización Contable.
-        	•	CO: Clasificador por Objeto del Gasto, entidad pública de México.
+        	•	COG: Clasificador por Objeto del Gasto, entidad pública de México.
         	•	Archivos de contexto: Documentos y materiales proporcionados que contienen información relevante.
         	•	Bases de datos: Fuentes de datos gubernamentales a las que puedes acceder cuando sea necesario.
 
