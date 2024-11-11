@@ -1,0 +1,5 @@
+from context_manager import ContextManager
+context_manager = ContextManager()
+
+print(context_manager.get_context_functions())
+print(context_manager.get_context_from_form_files("movimientos_mij_solicitud_de_movimientos_al_registro_de_constribuyentes.pdf"))

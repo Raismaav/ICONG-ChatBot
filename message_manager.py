@@ -1,3 +1,4 @@
+from system_message import system_message
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -15,13 +16,13 @@ class MessageManager:
         user: The user associated with the conversation.
         title: Title of the conversation.
         timestamp: Timestamp of when the conversation was created (in ISO 8601 format).
+        last_modified: Timestamp of the last modification to the conversation (in ISO 8601 format).
         system_message: Initial system message or context for the conversation.
         messages: List of messages in the conversation, each with role, content, timestamp, and a unique ID.
         filename: The JSON file where the conversation is stored.
-        full_filepath: Full path of the JSON file storing the conversation.
     """
 
-    def __init__(self, system_message: str = None, user: str = None, title: str = 'New conversation',
+    def __init__(self, system_message: str = system_message, user: str = None, title: str = 'New conversation',
                  timestamp: str | datetime = None, conversation_file: str = None, path: str = 'conversations/'):
         """
         Initializes a new conversation or loads an existing one from a JSON file.
@@ -39,6 +40,10 @@ class MessageManager:
             ValueError: If conversation_file is not a valid JSON file or is missing.
             FileNotFoundError: If the specified conversation file does not exist.
         """
+
+        if user is not None:
+            path = f"{path}{user.lower().replace(' ', '_')}/"
+
         if not os.path.exists(path):
             os.makedirs(path)  # Create directory if it does not exist
 
@@ -64,6 +69,7 @@ class MessageManager:
                 self.user = self.conversation['conversation']['header']['user']
                 self.title = self.conversation['conversation']['header']['title']
                 self.timestamp = self.conversation['conversation']['header']['timestamp']
+                self.last_modified = self.conversation['conversation']['header']['last_modified']
                 self.system_message = system_message or self.conversation['conversation']['system_message']
                 self.messages = self.conversation['conversation']['messages']
                 self.filename = self.conversation['conversation']['header']['filename']
@@ -79,6 +85,7 @@ class MessageManager:
             self.user = user
             self.title = title.replace('.', '')
             self.timestamp = timestamp or datetime.now(timezone.utc).isoformat()
+            self.last_modified = self.timestamp
             # Generate a unique ID for the conversation using a hash of the system_message and timestamp
             hash_input = (system_message + self.timestamp).encode('utf-8')
             self.conversation_id = hashlib.md5(hash_input).hexdigest()[:12]
@@ -94,6 +101,7 @@ class MessageManager:
                         "user": self.user,
                         "title": self.title,
                         "timestamp": self.timestamp,
+                        "last_modified": self.last_modified,
                         "filename": self.filename
                     },
                     "system_message": self.system_message,
@@ -110,7 +118,7 @@ class MessageManager:
 
     def add_message(self, message_dict: dict, timestamp: str | datetime = None):
         """
-        Adds a new message to the conversation.
+        Adds a new message to the conversation and updates the last_modified timestamp.
 
         Args:
             message_dict (dict): Dictionary containing:
@@ -121,6 +129,7 @@ class MessageManager:
         Raises:
             ValueError: If 'role' or 'content' are missing or not strings.
         """
+        timestamp = timestamp or datetime.now(timezone.utc).isoformat()
         role = message_dict.get('role')
         content = message_dict.get('content')
 
@@ -129,7 +138,6 @@ class MessageManager:
         if not isinstance(content, str):
             raise ValueError("'content' must be a string.")
 
-        timestamp = timestamp or datetime.now(timezone.utc).isoformat()
         # Generate a unique ID for the message using a hash of the content and timestamp
         hash_input = (content + timestamp).encode('utf-8')
         message_id = hashlib.md5(hash_input).hexdigest()[:12]
@@ -142,6 +150,8 @@ class MessageManager:
         }
         self.messages.append(message)
         self.conversation['conversation']['messages'] = self.messages
+        self.last_modified = timestamp
+        self.conversation['conversation']['header']['last_modified'] = self.last_modified
 
         # Update the JSON file
         try:
@@ -152,13 +162,15 @@ class MessageManager:
 
     def set_system_message(self, new_system_message: str):
         """
-        Updates the system message (context) of the conversation.
+        Updates the system message (context) of the conversation and the last_modified timestamp.
 
         Args:
             new_system_message (str): The new system message or context.
         """
+        self.last_modified = datetime.now(timezone.utc).isoformat()
         self.system_message = new_system_message
         self.conversation['conversation']['system_message'] = new_system_message
+        self.conversation['conversation']['header']['last_modified'] = self.last_modified
 
         # Update the JSON file
         try:
@@ -169,7 +181,7 @@ class MessageManager:
 
     def set_title(self, new_title: str):
         """
-        Modifies the title of the conversation.
+        Modifies the title of the conversation and updates the last_modified timestamp.
 
         Args:
             new_title (str): The new title of the conversation.
@@ -177,12 +189,14 @@ class MessageManager:
         Raises:
             OSError: If there is an error renaming the file.
         """
+        self.last_modified = datetime.now(timezone.utc).isoformat()
         old_full_filepath = self.full_filepath
-        self.title = new_title.replace('.', '')
-        self.filename = f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json"
+        self.title = ''.join(c for c in new_title if c.isalnum() or c in (' ', '_')).strip()
+        self.filename = f"{self.conversation_id}_{self.title.lower().replace(' ', '_').replace('.', '').replace('/', '')}.json"
         self.full_filepath = os.path.join(self.path, self.filename)
         self.conversation['conversation']['header']['title'] = self.title
         self.conversation['conversation']['header']['filename'] = self.filename
+        self.conversation['conversation']['header']['last_modified'] = self.last_modified
 
         # Rename the file
         try:
@@ -199,12 +213,13 @@ class MessageManager:
 
     def get_system_message(self) -> str:
         """
-        Retrieves the current system message of the conversation.
+        Retrieves the current system message of the conversation, appending the current date.
 
         Returns:
-            str: The system message or context of the conversation.
+            str: The system message or context of the conversation, followed by a note with the current date.
+                 This date is provided as a reminder for time-sensitive processes or database queries.
         """
-        return self.system_message + datetime.now().strftime('%Y-%m-%d')
+        return self.system_message + f" Debes tomar en cuenta la fecha de hoy para posibles consultas en la base de datos o cuando tengas que hacer algún proceso con cierta temporalidad, la fecha del día de hoy es {datetime.now().strftime('%Y-%m-%d')}"
 
     def get_filename(self) -> str:
         """
@@ -223,6 +238,15 @@ class MessageManager:
             dict: The full conversation object containing header, system_message, and messages.
         """
         return self.conversation
+
+    def get_header(self) -> dict:
+        """
+        Returns the header information of the current conversation.
+
+        Returns:
+            dict: The header containing id, user, title, timestamp, last_modified, and filename of the conversation.
+        """
+        return self.conversation['conversation']['header']
 
     def get_messages(self) -> list:
         """
@@ -264,7 +288,7 @@ class MessageManager:
         return len(self.messages)
 
     @staticmethod
-    def get_headers_from_user(user: str, path: str = 'conversations/') -> list:
+    def get_headers_from(user: str, path: str = 'conversations/') -> list:
         """
         Retrieves the headers of all conversations associated with a specific user.
 
@@ -296,3 +320,58 @@ class MessageManager:
                         continue
             return headers
         return []
+
+    @staticmethod
+    def delete_conversation(user: str, conversation_file: str, path: str = 'conversations/') -> bool:
+        """
+        Deletes a specific conversation associated with a user.
+
+        Args:
+            user (str): The user whose conversation is being deleted.
+            conversation_file (str): The filename of the conversation to be deleted.
+            path (str, optional): The directory where conversation files are stored (default is 'conversations/').
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+        """
+        if user:
+            path = f"{path}{user.lower().replace(' ', '_')}/"
+
+        full_conversation_file = os.path.join(path, conversation_file)
+
+        if os.path.exists(full_conversation_file) and os.path.isfile(full_conversation_file):
+            try:
+                os.remove(full_conversation_file)
+                return True
+            except (OSError, IOError) as e:
+                print(f"Error deleting conversation file '{conversation_file}': {e}")
+                return False
+        return False
+
+    @staticmethod
+    def delete_all_conversations(user: str, path: str = 'conversations/') -> bool:
+        """
+        Deletes all conversations associated with a specific user, but keeps the user's directory.
+
+        Args:
+            user (str): The user whose conversations are being deleted.
+            path (str, optional): The directory where conversation files are stored (default is 'conversations/').
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+        """
+        if user:
+            path = f"{path}{user.lower().replace(' ', '_')}/"
+
+        if os.path.exists(path) and os.path.isdir(path):
+            try:
+                # Delete all files in the user's directory
+                for file in os.listdir(path):
+                    full_path = os.path.join(path, file)
+                    if os.path.isfile(full_path):
+                        os.remove(full_path)
+                return True
+            except (OSError, IOError) as e:
+                print(f"Error deleting conversation files: {e}")
+                return False
+        return False
