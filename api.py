@@ -75,6 +75,7 @@ async def chat_respond(request: ChatRespondRequest):
             - For any other exceptions, with a 500 status code.
     """
     try:
+        print("\033[95m/chat/respond:\033[0m \033[93mMensaje recibido\033[0m")
         # Process and validate the timestamp if provided
         if request.timestamp:
             try:
@@ -97,6 +98,7 @@ async def chat_respond(request: ChatRespondRequest):
         )
 
         # Process the message and obtain the response
+        print("\033[95m/chat/respond:\033[0m \033[93mChat iniciado\033[0m")
         message = chat.response_to(request.message, parsed_timestamp)
         return {"header": chat.conversation.get_header(), "message": message}
 

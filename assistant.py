@@ -19,8 +19,8 @@ class Assistant:
         tools: Tools (functions) that the assistant can use if enabled.
     """
 
-    def __init__(self, system_message: str, default_model: str, temperature: float = 1, max_tokens: int = 256,
-                 have_tools: bool = False):
+    def __init__(self, system_message: str, default_model: str, temperature: float = 1, max_tokens: int = 1024,
+                 have_tools: bool = False, have_context: bool = True):
         """
         Initializes the assistant instance with the given parameters.
 
@@ -40,7 +40,8 @@ class Assistant:
         self.model = default_model  # Default OpenAI model to be used.
         self.temperature = temperature  # Controls randomness.
         self.max_tokens = max_tokens  # Maximum token limit for the responses.
-        self.tools = self.context_manager.get_context_functions() + self.tool_manager.get_tools() if have_tools else self.context_manager.get_context_functions()  # Initializes tools if they are enabled.
+        self.tools = self.context_manager.get_context_functions()  if have_context else None
+        self.tools = self.tools + self.tool_manager.get_tools() if have_tools else self.tools # Initializes tools if they are enabled.
 
     def __call_function(self, tool_calls, messages):
         """
@@ -56,10 +57,12 @@ class Assistant:
         calls = []  # List to store the responses from the tools.
         tools_called = []  # List to track which tools have been called.
 
+        print("\033[95mAssistant:__call_function():\033[0m \033[92mSeleccionando herramienta\033[0m")
         # Iterate over each tool call and execute the corresponding function.
         for tool_call in tool_calls:
             name = tool_call.function.name  # Name of the function to be executed.
             arguments = json.loads(tool_call.function.arguments)  # Function arguments in JSON format.
+            print(f"\033[95mAssistant:__call_function():\033[0m Llamando a la funcion {name}, con el parametro {arguments}")
             if name == "get_context_from_conac_files":
                 result = self.context_manager.get_context_from_conac_files(arguments['file_name'])  # Call the function and get the result.
             elif name == "get_context_from_form_files":
@@ -85,7 +88,7 @@ class Assistant:
                 "content": result,
                 "tool_call_id": tool_call.id,
             })
-
+        print("\033[95mAssistant:__call_function():\033[0m \033[92mHerramienta seleccionada\033[0m")
         # Prepare the tool call messages for the response.
         messege_call = [{
             "role": "assistant",
@@ -93,13 +96,16 @@ class Assistant:
             "tool_calls": tools_called
         }] + calls
 
+        print("\033[95mAssistant:__call_function():\033[0m \033[92mSolicitando nueva respuesta\033[0m")
         # Generate a response using the tool calls and previous messages.
         response = self.__response_to(messages + messege_call)
 
         # If the response contains content, return it; otherwise, call the tools again.
         if response.content:
+            print("\033[95mAssistant:__call_function():\033[0m \033[92mRetornando nueva respuesta\033[0m")
             return response
         else:
+            print("\033[95mAssistant:__call_function():\033[0m \033[93mLlamando nueva funcion\033[0m")
             return self.__call_function(response.tool_calls, messages + messege_call)
 
     def __response_to(self, messages: list | str, model: str = None):
@@ -115,27 +121,45 @@ class Assistant:
         """
         model = model or self.model  # Use the provided model or the default model.
 
+        print("\033[95mAssistant:__response_to():\033[0m \033[94mPreprocesado del asistente\033[0m")
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
 
+        print("\033[95mAssistant:__response_to():\033[0m \033[94mPeticion de respuesta al asistente\033[0m")
         # Create the chat completion request to OpenAI's API.
-        completion = self.client.chat.completions.create(
-            model=model,
-            messages=self.system_message + messages,
-            tools=self.tools,
-            temperature=self.temperature,
-            # max_tokens=self.max_tokens,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-        )
 
+        try:
+            completion = self.client.chat.completions.create(
+                model=model,
+                messages=self.system_message + messages,
+                tools=self.tools,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+            )
+        except Exception as e:
+            print("\033[95mAssistant:__response_to():\033[0m \033[91mError al solicitar respuesta\033[0m")
+            print("\033[91m{}\033[0m".format(e))
+            return {"role": "assistant", "content": "Lo siento, no puedo responder a eso."}
+
+        print("\033[95mAssistant:__response_to():\033[0m \033[94mRecuperando respuesta\033[0m")
         response = completion.choices[0].message  # Get the first message from the response.
 
         # If the response includes tool calls, execute them.
         if response.tool_calls:
-            return self.__call_function(response.tool_calls, messages)
+            print("\033[95mAssistant:__response_to():\033[0m \033[92mSolicitando herramientas\033[0m")
+            try:
+                call_response = self.__call_function(response.tool_calls, messages)
+                print(call_response)
+            except Exception as e:
+                print("\033[95mAssistant:__response_to():\033[0m \033[91mError al solicitar herramientas\033[0m")
+                print("\033[91m{}\033[0m".format(e))
+                return {"role": "assistant", "content": "Lo siento, no puedo responder a eso."}
+            return call_response
         else:
+            print("\033[95mAssistant:__response_to():\033[0m \033[94mRetornando respuesta\033[0m")
             return response
 
     def response_to(self, messages: list, model: str = None):
