@@ -20,7 +20,6 @@ class MessageManager:
         system_message: Initial system message or context for the conversation.
         messages: List of messages in the conversation, each with role, content, timestamp, and a unique ID.
         filename: The JSON file where the conversation is stored.
-        full_filepath: Full path of the JSON file storing the conversation.
     """
 
     def __init__(self, system_message: str = system_message, user: str = None, title: str = 'New conversation',
@@ -197,8 +196,8 @@ class MessageManager:
         """
         self.last_modified = datetime.now(timezone.utc).isoformat()
         old_full_filepath = self.full_filepath
-        self.title = new_title.replace('.', '')
-        self.filename = f"{self.conversation_id}_{self.title.lower().replace(' ', '_')}.json"
+        self.title = ''.join(c for c in new_title if c.isalnum() or c in (' ', '_')).strip()
+        self.filename = f"{self.conversation_id}_{self.title.lower().replace(' ', '_').replace('.', '').replace('/', '')}.json"
         self.full_filepath = os.path.join(self.path, self.filename)
         self.conversation['conversation']['header']['title'] = self.title
         self.conversation['conversation']['header']['filename'] = self.filename

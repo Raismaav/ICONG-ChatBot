@@ -62,14 +62,18 @@ class Chat:
         Returns:
             dict: The last message in the conversation (assistant's response).
         """
+        print("\033[95mChat:response_to():\033[0m \033[91mMensaje indexado\033[0m")
         # Add the user's message to the conversation
         self.conversation.add_message({"role": "user", "content": message}, timestamp)
         # Generate the assistant's response and add it to the conversation
+        print("\033[95mChat:response_to():\033[0m \033[91mMensaje enviado al asistente\033[0m")
         self.conversation.add_message(self.assistant.response_to(self.conversation.get_filtered_messages()))
+        print(f"\033[95mChat:response_to():\033[0m {self.conversation.get_header()}")
 
         # Automatically rename the conversation title after the second message
         if not self.__is_renamed and self.conversation.title == 'New conversation' and self.conversation.get_message_count() >= 2:
             self.generate_and_set_title()
+            print(f"\033[95mChat:response_to():\033[0m {self.conversation.get_header()}")
 
         return self.conversation.get_last_message()
 
@@ -81,11 +85,18 @@ class Chat:
             - Uses the Assistant to generate a short title based on the conversation.
             - Updates the conversation title if the conditions are met.
         """
+        print(f"\033[95mChat:generate_and_set_title():\033[0m \033[91mProceso de seteo de titulo\033[0m")
         title_generator = Assistant(
             system_message=(
-                "You generate a small title of the previous conversation no longer than "
-                "15 letters automatically in each query, even if the user doesn't tell you "
-                "anything, you don't ask them, you just generate it in the language of the conversation."
+                """Tú generas un título pequeño de la conversación anterior de no más de 
+                15 letras automáticamente en cada consulta, incluso si el usuario no te dice 
+                nada, no les preguntas, solo lo generas en el idioma de la conversación.
+                
+                Debes tambien de entragar el titulo en texto plano sin ningun tipo de adorno o formato.
+                Tampoco uses formato markdown o html, solo texto plano.
+                Omite cualquier tipo de salto de linea.
+                No uses caractereres que no sean soportados por los sistemas de archivos.
+                """
             ),
             temperature=1,
             max_tokens=15,
@@ -94,5 +105,6 @@ class Chat:
         )
         # Generate a new title and rename the conversation
         new_title = title_generator.response_to(self.conversation.get_messages())['content']
+        print(f"\033[95mChat:generate_and_set_title():\033[0m \033[91m--{new_title}--\033[0m")
         self.conversation.set_title(new_title)
         self.__is_renamed = True
