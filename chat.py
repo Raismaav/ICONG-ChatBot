@@ -2,7 +2,6 @@ from message_manager import MessageManager
 from assistant import Assistant
 from datetime import datetime
 
-
 class Chat:
     """
     Manages a conversation with an AI assistant, using MessageManager to store and manage the conversation,
@@ -67,7 +66,13 @@ class Chat:
         self.conversation.add_message({"role": "user", "content": message}, timestamp)
         # Generate the assistant's response and add it to the conversation
         print("\033[95mChat:response_to():\033[0m \033[91mMensaje enviado al asistente\033[0m")
-        self.conversation.add_message(self.assistant.response_to(self.conversation.get_filtered_messages()))
+
+        response = self.assistant.response_to(self.conversation.get_filtered_messages())
+
+        if not hasattr(response, 'role'):
+            return response
+
+        self.conversation.add_message(response)
         print(f"\033[95mChat:response_to():\033[0m {self.conversation.get_header()}")
 
         # Automatically rename the conversation title after the second message

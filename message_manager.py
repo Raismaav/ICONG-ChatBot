@@ -160,18 +160,13 @@ class MessageManager:
         except IOError as e:
             print(f"Error writing file {self.full_filepath}: {e}")
 
-    def set_system_message(self, new_system_message: str = system_message, message_to_append: str = None):
+    def set_system_message(self, new_system_message: str):
         """
         Updates the system message (context) of the conversation and the last_modified timestamp.
 
         Args:
             new_system_message (str): The new system message or context.
-            message_to_append (str): Additional message to append to the system message, if any.
         """
-        # Append the message if it exists
-        if message_to_append:
-            new_system_message = f"{new_system_message}\n{message_to_append}"
-
         self.last_modified = datetime.now(timezone.utc).isoformat()
         self.system_message = new_system_message
         self.conversation['conversation']['system_message'] = new_system_message

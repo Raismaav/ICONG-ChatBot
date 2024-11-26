@@ -2,6 +2,7 @@ from tool_manager import ToolManager
 from context_manager import ContextManager
 from dotenv import load_dotenv
 from openai import OpenAI
+import client_tools
 import json
 import os
 
@@ -42,6 +43,7 @@ class Assistant:
         self.max_tokens = max_tokens  # Maximum token limit for the responses.
         self.tools = self.context_manager.get_context_functions()  if have_context else None
         self.tools = self.tools + self.tool_manager.get_tools() if have_tools else self.tools # Initializes tools if they are enabled.
+        self.tools = self.tools + client_tools.tools
 
     def __call_function(self, tool_calls, messages):
         """
@@ -62,15 +64,6 @@ class Assistant:
         for tool_call in tool_calls:
             name = tool_call.function.name  # Name of the function to be executed.
             arguments = json.loads(tool_call.function.arguments)  # Function arguments in JSON format.
-            print(f"\033[95mAssistant:__call_function():\033[0m Llamando a la funcion {name}, con el parametro {arguments}")
-            if name == "get_context_from_conac_files":
-                result = self.context_manager.get_context_from_conac_files(arguments['file_name'])  # Call the function and get the result.
-            elif name == "get_context_from_form_files":
-                result = self.context_manager.get_context_from_form_files(arguments['file_name'])  # Call the function and get the result.
-            elif name == "get_context_from_presupuesto_files":
-                result = self.context_manager.get_context_from_presupuesto_files(arguments['file_name'])  # Call the function and get the result.
-            else:
-                result = self.tool_manager.call_function(name, arguments)  # Call the function and get the result.
 
             # Store the record of the tool call.
             tools_called.append({
@@ -81,6 +74,20 @@ class Assistant:
                     "arguments": f"{arguments}"
                 }
             })
+
+            if name in client_tools.tool_names:
+                print(f"\033[95mAssistant:__call_function():\033[0m Llamando a la funcion {name}, con el parametro {arguments}, en el cliente")
+                return tools_called
+
+            print(f"\033[95mAssistant:__call_function():\033[0m Llamando a la funcion {name}, con el parametro {arguments}")
+            if name == "get_context_from_conac_files":
+                result = self.context_manager.get_context_from_conac_files(arguments['file_name'])  # Call the function and get the result.
+            elif name == "get_context_from_form_files":
+                result = self.context_manager.get_context_from_form_files(arguments['file_name'])  # Call the function and get the result.
+            elif name == "get_context_from_presupuesto_files":
+                result = self.context_manager.get_context_from_presupuesto_files(arguments['file_name'])  # Call the function and get the result.
+            else:
+                result = self.tool_manager.call_function(name, arguments)  # Call the function and get the result.
 
             # Store the result in the calls list.
             calls.append({
@@ -174,4 +181,7 @@ class Assistant:
             A dictionary with the role of the sender (assistant) and the content of the response.
         """
         response = self.__response_to(messages, model)  # Generate the response.
-        return {"role": response.role, "content": response.content}  # Return the formatted response.
+        if hasattr(response, 'role'):
+            return {"role": response.role, "content": response.content}  # Return the formatted response.
+        else:
+            return response
