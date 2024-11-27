@@ -69,7 +69,7 @@ class Chat:
 
         response = self.assistant.response_to(self.conversation.get_filtered_messages())
 
-        if not hasattr(response, 'role'):
+        if not 'role' in response:
             return response
 
         self.conversation.add_message(response)

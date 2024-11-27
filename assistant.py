@@ -41,9 +41,9 @@ class Assistant:
         self.model = default_model  # Default OpenAI model to be used.
         self.temperature = temperature  # Controls randomness.
         self.max_tokens = max_tokens  # Maximum token limit for the responses.
-        self.tools = self.context_manager.get_context_functions()  if have_context else None
-        self.tools = self.tools + self.tool_manager.get_tools() if have_tools else self.tools # Initializes tools if they are enabled.
-        self.tools = self.tools + client_tools.tools
+        self.tools = self.context_manager.get_context_functions() if have_context else []
+        self.tools += self.tool_manager.get_tools() if have_tools else []
+        self.tools += client_tools.tools
 
     def __call_function(self, tool_calls, messages):
         """
@@ -58,6 +58,7 @@ class Assistant:
         """
         calls = []  # List to store the responses from the tools.
         tools_called = []  # List to track which tools have been called.
+        client_call = False
 
         print("\033[95mAssistant:__call_function():\033[0m \033[92mSeleccionando herramienta\033[0m")
         # Iterate over each tool call and execute the corresponding function.
@@ -76,10 +77,16 @@ class Assistant:
             })
 
             if name in client_tools.tool_names:
-                print(f"\033[95mAssistant:__call_function():\033[0m Llamando a la funcion {name}, con el parametro {arguments}, en el cliente")
-                return tools_called
+                client_call = True
 
-            print(f"\033[95mAssistant:__call_function():\033[0m Llamando a la funcion {name}, con el parametro {arguments}")
+        if client_call:
+            return tools_called
+
+        for tool_call in tool_calls:
+            name = tool_call.function.name
+            arguments = json.loads(tool_call.function.arguments)
+
+            print(f"\033[95mAssistant:__call_function():\033[0m Llamando a la función {name}, con el parámetro {arguments}")
             if name == "get_context_from_conac_files":
                 result = self.context_manager.get_context_from_conac_files(arguments['file_name'])  # Call the function and get the result.
             elif name == "get_context_from_form_files":
@@ -112,7 +119,7 @@ class Assistant:
             print("\033[95mAssistant:__call_function():\033[0m \033[92mRetornando nueva respuesta\033[0m")
             return response
         else:
-            print("\033[95mAssistant:__call_function():\033[0m \033[93mLlamando nueva funcion\033[0m")
+            print("\033[95mAssistant:__call_function():\033[0m \033[93mLlamando nueva función\033[0m")
             return self.__call_function(response.tool_calls, messages + messege_call)
 
     def __response_to(self, messages: list | str, model: str = None):
@@ -132,7 +139,7 @@ class Assistant:
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
 
-        print("\033[95mAssistant:__response_to():\033[0m \033[94mPeticion de respuesta al asistente\033[0m")
+        print("\033[95mAssistant:__response_to():\033[0m \033[94mPetición de respuesta al asistente\033[0m")
         # Create the chat completion request to OpenAI's API.
 
         try:

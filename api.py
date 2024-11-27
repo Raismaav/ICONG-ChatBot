@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from message_manager import MessageManager
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Dict, Optional
 from dateutil import parser
 from chat import Chat
 import json
@@ -52,7 +52,6 @@ class ChatDeleteRequest(BaseModel):
     """
     user: str
     conversation_file: str
-
 
 # Endpoint for /chat/respond
 @app.post('/chat/respond')
@@ -109,7 +108,6 @@ async def chat_respond(request: ChatRespondRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # Endpoint for /chat/set_title
 @app.post('/chat/set_title')
 async def chat_set_title(request: ChatSetTitleRequest):
@@ -146,7 +144,6 @@ async def chat_set_title(request: ChatSetTitleRequest):
         raise HTTPException(status_code=400, detail='Invalid conversation file format')
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # Endpoint for /chat/last_message
 @app.get('/chat/last_message')
@@ -186,7 +183,6 @@ async def chat_last_message(user: str, conversation_file: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # Endpoint for /chat/messages
 @app.get('/chat/messages')
 async def chat_messages(user: str, conversation_file: str):
@@ -224,7 +220,6 @@ async def chat_messages(user: str, conversation_file: str):
         raise HTTPException(status_code=400, detail='Invalid conversation file format')
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # Endpoint for /chat/conversation
 @app.get('/chat/conversation')
@@ -264,8 +259,6 @@ async def chat_conversation(user: str, conversation_file: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# Endpoint for /chat/headers
 @app.get('/chat/headers')
 async def chat_headers(user: str):
     """
