@@ -82,6 +82,22 @@ class Chat:
 
         return self.conversation.get_last_message()
 
+    def continue_response(self, calls: list, tools_called: list) -> dict:
+        response = self.assistant.continue_call(self.conversation.get_filtered_messages(), calls, tools_called)
+
+        if 'role' not in response:
+            return response
+
+        self.conversation.add_message(response)
+        print(f"\033[95mChat:continue_response:\033[0m {self.conversation.get_header()}")
+
+        # Automatically rename the conversation title after the second message
+        if not self.__is_renamed and self.conversation.title == 'New conversation' and self.conversation.get_message_count() >= 2:
+            self.generate_and_set_title()
+            print(f"\033[95mChat:continue_response:\033[0m {self.conversation.get_header()}")
+
+        return self.conversation.get_last_message()
+
     def generate_and_set_title(self):
         """
         Generates a new title for the conversation and sets it.

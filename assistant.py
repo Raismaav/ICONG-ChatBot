@@ -170,7 +170,7 @@ class Assistant:
             except Exception as e:
                 print("\033[95mAssistant:__response_to():\033[0m \033[91mError al solicitar herramientas\033[0m")
                 print("\033[91m{}\033[0m".format(e))
-                return {"role": "assistant", "content": "Lo siento, no puedo responder a eso."}
+                return {"role": "assistant", "content": "Lo siento, ocurrio un error al solicitar herramientas."}
             return call_response
         else:
             print("\033[95mAssistant:__response_to():\033[0m \033[94mRetornando respuesta\033[0m")
@@ -192,3 +192,54 @@ class Assistant:
             return {"role": response.role, "content": response.content}  # Return the formatted response.
         else:
             return response
+
+    def continue_call(self, messages: list, calls: list, tools_called: list):
+        print(f"calls: {calls}")
+        print(f"tools_called: {tools_called}")
+        try:
+            # Crear un conjunto de IDs de llamadas de herramientas ya ejecutadas.
+            executed_ids = set(call['tool_call_id'] for call in calls)
+            # Iterar sobre las herramientas solicitadas que aún no se han ejecutado.
+            for tool_call in tools_called:
+                tool_call['function']['arguments'] = json.dumps(tool_call['function']['arguments'])
+                if tool_call['id'] not in executed_ids:
+                    name = tool_call['function']['name']
+                    arguments = json.loads(tool_call['function']['arguments'])  # Convertir de cadena JSON a dict
+
+                    print(f"Assistant:continue_call(): Llamando a la función {name} con argumentos {arguments}")
+
+                    # Ejecutar la función correspondiente.
+                    if name == "get_context_from_conac_files":
+                        result = self.context_manager.get_context_from_conac_files(arguments['file_name'])
+                    elif name == "get_context_from_form_files":
+                        result = self.context_manager.get_context_from_form_files(arguments['file_name'])
+                    elif name == "get_context_from_presupuesto_files":
+                        result = self.context_manager.get_context_from_presupuesto_files(arguments['file_name'])
+                    else:
+                        result = self.tool_manager.call_function(name, arguments)
+
+                    # Registrar el resultado en la lista de llamadas.
+                    calls.append({
+                        "role": "tool",
+                        "content": result,
+                        "tool_call_id": tool_call['id'],
+                    })
+
+            # Construir la nueva llamada con los mensajes y las llamadas realizadas.
+            messege_call = [{
+                "role": "assistant",
+                "content": "",
+                "tool_calls": tools_called
+            }] + calls
+            # Generar la respuesta del asistente.
+            response = self.__response_to(messages + messege_call)
+            if hasattr(response, 'role'):
+                print("\033[95mAssistant:continue_call():\033[0m \033[92mRetornando nueva respuesta\033[0m")
+                return {"role": response.role, "content": response.content}
+            else:
+                print("\033[95mAssistant:continue_call():\033[0m \033[93mLlamando nueva función\033[0m")
+                return self.__call_function(response['tool_calls'], messages + messege_call)
+        except Exception as e:
+            print("\033[95mAssistant:continue_call():\033[0m \033[91mError al continuar la solicitud\033[0m")
+            print("\033[91m{}\033[0m".format(e))
+            return {"role": "assistant", "content": "Lo siento, no puedo responder a eso."}

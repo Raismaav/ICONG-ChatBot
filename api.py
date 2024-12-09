@@ -53,6 +53,28 @@ class ChatDeleteRequest(BaseModel):
     user: str
     conversation_file: str
 
+# Models for /chat/continue_response
+class ToolFunction(BaseModel):
+    name: str
+    arguments: Dict
+
+class ToolCalled(BaseModel):
+    id: str
+    type: str
+    function: ToolFunction
+
+class Call(BaseModel):
+    role: str
+    content: str
+    tool_call_id: str
+
+class ContinueResponseRequest(BaseModel):
+    user: Optional[str] = None
+    have_tools: Optional[bool] = False
+    conversation_file: Optional[str] = None
+    tools_called: List[ToolCalled]
+    calls: List[Call]
+
 # Endpoint for /chat/respond
 @app.post('/chat/respond')
 async def chat_respond(request: ChatRespondRequest):
@@ -98,8 +120,45 @@ async def chat_respond(request: ChatRespondRequest):
 
         # Process the message and obtain the response
         print("\033[95m/chat/respond:\033[0m \033[93mChat iniciado\033[0m")
-        message = chat.response_to(request.message, parsed_timestamp)
-        return {"header": chat.conversation.get_header(), "message": message}
+        response = chat.response_to(request.message, parsed_timestamp)
+
+        if 'role' in response:
+            return {"header": chat.conversation.get_header(), "message": response}
+        else:
+            return {"header": chat.conversation.get_header(), "tools": response}
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail='Conversation file not found')
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail='Invalid conversation file format')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Endpoint for /chat/continue_response
+@app.post('/chat/continue_response')
+async def chat_continue_response(request: ContinueResponseRequest):
+    try:
+        print("\033[95m/chat/continue_response:\033[0m \033[93mRequest received\033[0m")
+
+        # Convert Pydantic models to dictionaries
+        calls_as_dicts = [call.dict() for call in request.calls]
+        tools_called_as_dicts = [tool.dict() for tool in request.tools_called]
+
+        # Create or load a Chat instance
+        chat = Chat(
+            user=request.user,
+            have_tools=request.have_tools,
+            conversation_file=request.conversation_file,
+        )
+
+        # Process the continue response and obtain the response
+        print("\033[95m/chat/continue_response:\033[0m \033[93mChat initialized\033[0m")
+        response = chat.continue_response(calls_as_dicts, tools_called_as_dicts)
+
+        if 'role' in response:
+            return {"header": chat.conversation.get_header(), "message": response}
+        else:
+            return {"header": chat.conversation.get_header(), "tools": response}
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail='Conversation file not found')
