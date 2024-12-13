@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from message_manager import MessageManager
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Optional
 from dateutil import parser
 from chat import Chat
 import json
@@ -56,7 +56,7 @@ class ChatDeleteRequest(BaseModel):
 # Models for /chat/continue_response
 class ToolFunction(BaseModel):
     name: str
-    arguments: Dict
+    arguments: str
 
 class ToolCalled(BaseModel):
     id: str
@@ -72,7 +72,7 @@ class ContinueResponseRequest(BaseModel):
     user: Optional[str] = None
     have_tools: Optional[bool] = False
     conversation_file: Optional[str] = None
-    tools_called: List[ToolCalled]
+    tools: List[ToolCalled]
     calls: List[Call]
 
 # Endpoint for /chat/respond
@@ -142,7 +142,7 @@ async def chat_continue_response(request: ContinueResponseRequest):
 
         # Convert Pydantic models to dictionaries
         calls_as_dicts = [call.dict() for call in request.calls]
-        tools_called_as_dicts = [tool.dict() for tool in request.tools_called]
+        tools_as_dicts = [tool.dict() for tool in request.tools]
 
         # Create or load a Chat instance
         chat = Chat(
@@ -153,7 +153,7 @@ async def chat_continue_response(request: ContinueResponseRequest):
 
         # Process the continue response and obtain the response
         print("\033[95m/chat/continue_response:\033[0m \033[93mChat initialized\033[0m")
-        response = chat.continue_response(calls_as_dicts, tools_called_as_dicts)
+        response = chat.continue_response(calls_as_dicts, tools_as_dicts)
 
         if 'role' in response:
             return {"header": chat.conversation.get_header(), "message": response}

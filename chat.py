@@ -122,7 +122,7 @@ class Chat:
             temperature=1,
             max_tokens=15,
             default_model="gpt-4o-mini",
-            have_tools=True
+            have_context=False
         )
         # Generate a new title and rename the conversation
         new_title = title_generator.response_to(self.conversation.get_messages())['content']

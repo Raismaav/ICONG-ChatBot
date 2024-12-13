@@ -41,9 +41,8 @@ class Assistant:
         self.model = default_model  # Default OpenAI model to be used.
         self.temperature = temperature  # Controls randomness.
         self.max_tokens = max_tokens  # Maximum token limit for the responses.
-        self.tools = self.context_manager.get_context_functions() if have_context else []
-        self.tools += self.tool_manager.get_tools() if have_tools else []
-        self.tools += client_tools.tools
+        self.tools = self.context_manager.get_context_functions() if have_context else None
+        self.tools += self.tool_manager.get_tools() + client_tools.tools if have_tools else None
 
     def __call_function(self, tool_calls, messages):
         """
@@ -201,7 +200,6 @@ class Assistant:
             executed_ids = set(call['tool_call_id'] for call in calls)
             # Iterar sobre las herramientas solicitadas que aún no se han ejecutado.
             for tool_call in tools_called:
-                tool_call['function']['arguments'] = json.dumps(tool_call['function']['arguments'])
                 if tool_call['id'] not in executed_ids:
                     name = tool_call['function']['name']
                     arguments = json.loads(tool_call['function']['arguments'])  # Convertir de cadena JSON a dict
