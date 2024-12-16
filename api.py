@@ -82,18 +82,23 @@ async def chat_respond(request: ChatRespondRequest):
     Handles the /chat/respond endpoint, processing a user message and generating a response from the assistant.
 
     Args:
-        request (ChatRespondRequest): Request object containing user information, the message content, optional tool access,
-                                      conversation file path, and an optional timestamp.
+        request (ChatRespondRequest): Request object containing:
+            - user (str): The user interacting with the chat.
+            - message (str): The message content sent by the user.
+            - have_tools (Optional[bool]): Whether the assistant has tools available.
+            - conversation_file (Optional[str]): Path to an existing conversation file.
+            - timestamp (Optional[str]): Timestamp of the message (ISO format or custom format).
 
     Returns:
-        dict: A dictionary containing the assistant's response and the conversation header.
+        dict: A dictionary containing:
+            - "header": The conversation header.
+            - "message" or "tools": The assistant's response or tools if applicable.
 
     Raises:
         HTTPException: Raised under the following conditions:
-            - If the conversation file is not found, with a 404 status code.
-            - If the conversation file format is invalid JSON, with a 400 status code.
-            - If there is an invalid date format in the timestamp, with a 400 status code.
-            - For any other exceptions, with a 500 status code.
+            - 400: Invalid conversation file format or timestamp.
+            - 404: Conversation file not found.
+            - 500: Any other server-side error.
     """
     try:
         print("\033[95m/chat/respond:\033[0m \033[93mMensaje recibido\033[0m")
@@ -137,6 +142,28 @@ async def chat_respond(request: ChatRespondRequest):
 # Endpoint for /chat/continue_response
 @app.post('/chat/continue_response')
 async def chat_continue_response(request: ContinueResponseRequest):
+    """
+    Handles the /chat/continue_response endpoint, allowing the assistant to continue processing a previous response.
+
+    Args:
+        request (ContinueResponseRequest): Request object containing:
+            - tools (List[ToolCalled]): A list of tools requested by the assistant.
+            - calls (List[Call]): A list of tool call responses to continue the conversation.
+            - user (Optional[str]): The user interacting with the chat.
+            - have_tools (Optional[bool]): Whether the assistant has tools available.
+            - conversation_file (Optional[str]): Path to an existing conversation file.
+
+    Returns:
+        dict: A dictionary containing:
+            - "header": The conversation header.
+            - "message" or "tools": The assistant's response or tools if applicable.
+
+    Raises:
+        HTTPException: Raised under the following conditions:
+            - 400: Invalid conversation file format.
+            - 404: Conversation file not found.
+            - 500: Any other server-side error.
+    """
     try:
         print("\033[95m/chat/continue_response:\033[0m \033[93mRequest received\033[0m")
 
@@ -350,16 +377,21 @@ async def chat_headers(user: str):
 @app.delete('/chat/delete')
 async def delete(request: ChatDeleteRequest):
     """
-    Handles the /chat/delete_conversation endpoint, deleting a specific conversation for a user.
+    Handles the /chat/delete endpoint, deleting a specific conversation for a user.
 
     Args:
-        request (ChatDeleteRequest): Request object containing user and conversation file.
+        request (ChatDeleteRequest): Request object containing:
+            - user (str): The user whose conversation is being deleted.
+            - conversation_file (str): The filename of the conversation to be deleted.
 
     Returns:
         dict: A success message if the conversation was deleted successfully.
 
     Raises:
-        HTTPException: If the conversation file is not found or if there are errors during deletion.
+        HTTPException: Raised under the following conditions:
+            - 400: Missing required fields in the request.
+            - 404: Conversation file not found.
+            - 500: Failed to delete the conversation due to system errors.
     """
     try:
         if not request.conversation_file:

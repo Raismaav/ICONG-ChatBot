@@ -11,17 +11,16 @@ class MessageManager:
     It supports creating new conversations, adding messages, updating conversation details, and resuming previous conversations.
 
     Attributes:
-        path: Directory where the conversation files are stored.
-        conversation_id: Unique identifier of the conversation (based on system message and timestamp).
-        user: The user associated with the conversation.
-        title: Title of the conversation.
-        timestamp: Timestamp of when the conversation was created (in ISO 8601 format).
-        last_modified: Timestamp of the last modification to the conversation (in ISO 8601 format).
-        system_message: Initial system message or context for the conversation.
-        messages: List of messages in the conversation, each with role, content, timestamp, and a unique ID.
-        filename: The JSON file where the conversation is stored.
+        path (str): Directory where the conversation files are stored.
+        conversation_id (str): Unique identifier of the conversation (based on system message and timestamp).
+        user (str): The user associated with the conversation.
+        title (str): Title of the conversation.
+        timestamp (str): Timestamp of when the conversation was created (in ISO 8601 format).
+        last_modified (str): Timestamp of the last modification to the conversation (in ISO 8601 format).
+        system_message (str): Initial system message or context for the conversation.
+        messages (list): List of messages in the conversation, each with role, content, timestamp, and a unique ID.
+        filename (str): The JSON file where the conversation is stored.
     """
-
     def __init__(self, system_message: str = system_message, user: str = None, title: str = 'New conversation',
                  timestamp: str | datetime = None, conversation_file: str = None, path: str = 'conversations/'):
         """
@@ -40,7 +39,6 @@ class MessageManager:
             ValueError: If conversation_file is not a valid JSON file or is missing.
             FileNotFoundError: If the specified conversation file does not exist.
         """
-
         if user is not None:
             path = f"{path}{user.lower().replace(' ', '_')}/"
 
@@ -216,8 +214,8 @@ class MessageManager:
         Retrieves the current system message of the conversation, appending the current date.
 
         Returns:
-            str: The system message or context of the conversation, followed by a note with the current date.
-                 This date is provided as a reminder for time-sensitive processes or database queries.
+            str: The system message of the conversation, followed by a note with the current date.
+                 This date is included as a reminder for time-sensitive processes or database queries.
         """
         return self.system_message + f" Debes tomar en cuenta la fecha de hoy para posibles consultas en la base de datos o cuando tengas que hacer algún proceso con cierta temporalidad, la fecha del día de hoy es {datetime.now().strftime('%Y-%m-%d')}"
 
@@ -262,7 +260,9 @@ class MessageManager:
         Returns a filtered list of messages containing only the role and content.
 
         Returns:
-            list: A list of dictionaries, each with 'role' and 'content'.
+            list: A list of dictionaries, where each dictionary contains:
+                - 'role' (str): The role of the sender (e.g., 'user', 'assistant').
+                - 'content' (str): The content of the message.
         """
         return [{'role': msg['role'], 'content': msg['content']} for msg in self.messages]
 
@@ -271,7 +271,11 @@ class MessageManager:
         Returns the last message added to the conversation.
 
         Returns:
-            dict: The last message in the conversation, containing role, content, timestamp, and ID.
+            dict: The last message in the conversation, containing:
+                - 'role' (str): The role of the sender.
+                - 'content' (str): The content of the message.
+                - 'timestamp' (str): The timestamp when the message was added.
+                - 'id' (str): The unique identifier for the message.
             If there are no messages, returns an empty dictionary.
         """
         if self.messages:
