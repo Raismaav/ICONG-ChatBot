@@ -41,7 +41,8 @@ class Assistant:
         self.temperature = temperature  # Controls randomness.
         self.max_tokens = max_tokens  # Maximum token limit for the responses.
         self.tools = self.context_manager.get_context_functions() if have_context else None
-        self.tools += self.tool_manager.get_tools() + client_tools.tools if have_tools else None
+        if have_tools:
+            self.tools += (self.tool_manager.get_tools() or []) + (client_tools.tools or [])
 
     def __call_function(self, tool_calls, messages):
         """

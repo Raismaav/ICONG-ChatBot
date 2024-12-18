@@ -74,7 +74,7 @@ class Chat:
         print(f"\033[95mChat:response_to():\033[0m {self.conversation.get_header()}")
 
         # Automatically rename the conversation title after the second message
-        if not self.__is_renamed and self.conversation.title == 'New conversation' and self.conversation.get_message_count() >= 2:
+        if not self.__is_renamed and self.conversation.get_title() == 'New conversation' and self.conversation.get_message_count() >= 2:
             self.generate_and_set_title()
             print(f"\033[95mChat:response_to():\033[0m {self.conversation.get_header()}")
 
@@ -105,7 +105,7 @@ class Chat:
         print(f"\033[95mChat:continue_response:\033[0m {self.conversation.get_header()}")
 
         # Automatically rename the conversation title after the second message
-        if not self.__is_renamed and self.conversation.title == 'New conversation' and self.conversation.get_message_count() >= 2:
+        if not self.__is_renamed and self.conversation.get_title() == 'New conversation' and self.conversation.get_message_count() >= 2:
             self.generate_and_set_title()
             print(f"\033[95mChat:continue_response:\033[0m {self.conversation.get_header()}")
 
