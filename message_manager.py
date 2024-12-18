@@ -141,7 +141,7 @@ class MessageManager:
             self.full_filepath = full_filepath
 
             # Guardar el archivo inicial
-            self._save_to_file()
+            self.__save_to_file()
 
     def add_message(self, message_dict: dict, timestamp: str | datetime = None):
         """
@@ -184,7 +184,7 @@ class MessageManager:
         self.conversation.conversation.header.last_modified = current_timestamp
 
         # Guardar en disco
-        self._save_to_file()
+        self.__save_to_file()
 
     def set_system_message(self, new_system_message: str):
         """
@@ -197,7 +197,7 @@ class MessageManager:
         self.conversation.conversation.system_message = new_system_message
         self.conversation.conversation.header.last_modified = current_timestamp
 
-        self._save_to_file()
+        self.__save_to_file()
 
     def set_title(self, new_title: str):
         """
@@ -232,7 +232,7 @@ class MessageManager:
         except OSError as e:
             print(f"Error renaming file from {old_full_filepath} to {self.full_filepath}: {e}")
 
-        self._save_to_file()
+        self.__save_to_file()
 
     def get_title(self) -> str:
         """Retorna el titulo de la conversacion."""
