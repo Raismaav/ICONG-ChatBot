@@ -50,78 +50,24 @@ Para configurar el entorno de desarrollo del proyecto, sigue estos pasos:
 
 ## Dependencias
 
-Este proyecto utiliza las siguientes bibliotecas:
+Las dependencias del proyecto se encuentran listadas en el archivo `requirements.txt`. Para instalar todas las bibliotecas necesarias, utiliza el siguiente comando:
 
-```plaintext
-aiohappyeyeballs==2.4.3
-aiohttp==3.10.10
-aiosignal==1.3.1
-annotated-types==0.7.0
-anyio==4.6.0
-argcomplete==1.10.3
-attrs==24.2.0
-beautifulsoup4==4.8.2
-certifi==2024.8.30
-chardet==3.0.4
-charset-normalizer==3.3.2
-click==8.1.7
-colorama==0.4.6
-compressed-rtf==1.0.6
-contourpy==1.3.0
-cycler==0.12.1
-distro==1.9.0
-docx2txt==0.8
-ebcdic==1.1.1
-extract-msg==0.28.7
-fastapi==0.115.0
-fonttools==4.54.1
-frozenlist==1.5.0
-h11==0.14.0
-httpcore==1.0.6
-httpx==0.27.2
-idna==3.10
-IMAPClient==2.1.0
-jiter==0.5.0
-kiwisolver==1.4.7
-lxml==5.3.0
-matplotlib==3.9.2
-multidict==6.1.0
-mysql-connector-python==9.0.0
-numpy==2.1.1
-olefile==0.47
-openai==1.51.0
-packaging==24.1
-pdfminer.six==20191110
-pillow==10.4.0
-propcache==0.2.0
-pycryptodome==3.21.0
-pydantic==2.9.2
-pydantic_core==2.23.4
-pyparsing==3.1.4
-PyPDF2==3.0.1
-python-dateutil==2.9.0.post0
-python-dotenv==1.0.1
-python-pptx==0.6.23
-requests==2.32.3
-six==1.12.0
-sniffio==1.3.1
-sortedcontainers==2.4.0
-soupsieve==2.6
-SpeechRecognition==3.8.1
-starlette==0.38.6
-textract==1.6.5
-tqdm==4.66.5
-typing_extensions==4.12.2
-tzdata==2024.2
-tzlocal==5.2
-urllib3==2.2.3
-uvicorn==0.31.0
-xlrd==1.2.0
-XlsxWriter==3.2.0
-yarl==1.17.1
+```bash
+pip install -r requirements.txt
 ```
 
+El archivo `requirements.txt` incluye dependencias clave como:
+- `fastapi`: Framework para construir APIs web rápidas y escalables.
+- `uvicorn`: Servidor ASGI para ejecutar aplicaciones FastAPI.
+- `openai`: Biblioteca para interactuar con la API de OpenAI.
+- `matplotlib`, `numpy`: Herramientas para la generación y manipulación de gráficos y datos.
+- `SpeechRecognition`, `pydantic`: Utilidades para reconocimiento de voz y validación de datos.
+
+Para más detalles, consulta el contenido completo del archivo `requirements.txt`.
+
 ## Uso
+
+Para más información sobre aspectos específicos del proyecto, consulta el archivo [CONSIDERACIONES.md](docs/CONSIDERACIONES.md). Este archivo contiene las consideraciones para mejoras futuras en el ámbito de mantenibilidad, escalabilidad y nuevas funcionalidades.
 
 1. Configura las variables de entorno en el archivo `.env`.
 2. Ejecuta el servidor FastAPI en modo desarrollo:
@@ -136,11 +82,7 @@ yarl==1.17.1
     uvicorn api:app --host 0.0.0.0 --port 8000 --workers 4
     ```
 
-4. Accede a la documentación interactiva en:
-
-    ```plaintext
-    http://127.0.0.1:8080/docs
-    ```
+4. Accede a la documentación interactiva [aquí](http://127.0.0.1:8080/docs) una vez que el servidor esté en funcionamiento.
 
 ## Estructura del proyecto
 
@@ -153,3 +95,5 @@ yarl==1.17.1
 - `message_manager.py`: Administra la creación, almacenamiento y organización de los mensajes del chatbot.
 - `system_message.py`: Define el mensaje inicial del sistema, utilizado como base para las interacciones del asistente.
 - `tool_manager.py`: Contiene herramientas adicionales que se ejecutan en el servidor para ampliar las capacidades del chatbot.
+
+[![](https://mermaid.ink/img/pako:eNq1WFFu3DYQvQohIIAMry-wHwWMDYoEiJEgaX9aBwIrze6yoUiBpNwYsXupHqEX6wwpaUmJyrqIvR_rFTkzfDN8fEP5W1HrBoptUUtu7WvBD4a3t4rh59UrdvXjnynWDhcAyzojVC06LvG3AclroRVvuGW1Vgwk28v-T80aYJIz3klRo8W__6jnhxS-fdpsd-SOfQsj9LkiNHdgLHcIj23ZDVjLD3DDFX6b2BDdhXVcObS6Hn_HBlUlbGVA8RYatPlDa3mavqRpJVxVlb0Fs2XWmQ078juoHBraYL9J4FR7IWGw7Lg7Dj-daAEXb7sta7gDenzAiYt4MQO208pS8LINKZ3xRsSNqF0cBLE4oXqoxmhlzSVBlZg8RiLcFQ1BE8ZyQQ6gwOBCFVdNZcFVTjgJJZneadEE08dbFe_SVN50q2jBqg07g-6_4GNmnwg1fHWR4S6M5GylAL-h7ztQ12_jKXtvHbTVUDwWEvydsvscm7V4qCTztU2gQttR2r0h173UPKFKy7_iznwBZXFWpDTyZR3WY6Xu_LmRF1kqpSCHHW5gz3uJBSBo466f8AxwNhEIjyHHRj8yFDSMXaSMp92v9r2qia-l3yDPEYweMNmREw-UT-qcIelArgcP-pRAjljr3uc8J14T1IXv_-L4jLipeqTspRO8JMpMfn7updxFQzeUSGy_76ngqAu5cOeYESmPP4VLScDnh1EWniBGCSt504zrjUWtqFKhXqvLpEoQQpFOpBmUCv6qMkmteQeVIadTpjnbQ6JIs2oeljBWrKg4JPxr83Ely7xMuuoIvAGzOj0S1Rukp2kC4cBAc94SyeqSlL6zHmLvlfNWiVJdsr-RbjZohi9Amd0Mh0nXUX622hvdxl3wRKcM3MEfjwE4SOsYhTjP1ExHTkOTksVh7CrEU5zp-D_zFcofe21Z-eG-wTYo6gtEYDhdm7CtwXRvGvG-0M0piFpWk2Jtu5yrWGz9mjue1cq5URoxcGUW640fTLZw3qVnZ288CWP_HgWaUvh8FlZYLwUmmuUqRJQwutKwvcIs_SZFXE6FE6obsReQWXHUm3hmpRctd8voHBjf5v1l6Oko02K81GkYXiiQ8kcw-NZCdzZ8j7gfr3r6pZgf3TCXN1GbEaup_Sa7n16SaNsGVeHm0LeYjA0CvNI7_GIzKV-SNrrhLl5w_H14BPB03EPjSr3L74h04oAiTw-89npsS_qupuQzua4F2WvT_miMDm-Lfdcjj_X5UC_F44_-LRiVmqhce1I__zr-Dffq6qf5XXTLbotfLQ99hMuW1yggBg8RqiNtLP4-dROtEFoxC3gdvQBHscILnvH3cSownzxPDuQeHyYKsNMt3t8hbzwj9Fn78P7m7T5hbXXbK1H7_kht8vrD29FtVhXyzfe3sCT2Xjitmbcc8KbNLOe-MJp7vhmb3hN9E4knr3dUEmQXeRWbogXTctEU28Irwm3hjtDiJJk23Hwhs0e0473Tn-5VXWyd6WFTGN0fjsV2z6XFp76jq_rwH6NptOPqN61Pz9AIp83N8D8m-vP4H_1sn7I?type=png)](https://mermaid.live/edit#pako:eNq1WFFu3DYQvQohIIAMry-wHwWMDYoEiJEgaX9aBwIrze6yoUiBpNwYsXupHqEX6wwpaUmJyrqIvR_rFTkzfDN8fEP5W1HrBoptUUtu7WvBD4a3t4rh59UrdvXjnynWDhcAyzojVC06LvG3AclroRVvuGW1Vgwk28v-T80aYJIz3klRo8W__6jnhxS-fdpsd-SOfQsj9LkiNHdgLHcIj23ZDVjLD3DDFX6b2BDdhXVcObS6Hn_HBlUlbGVA8RYatPlDa3mavqRpJVxVlb0Fs2XWmQ078juoHBraYL9J4FR7IWGw7Lg7Dj-daAEXb7sta7gDenzAiYt4MQO208pS8LINKZ3xRsSNqF0cBLE4oXqoxmhlzSVBlZg8RiLcFQ1BE8ZyQQ6gwOBCFVdNZcFVTjgJJZneadEE08dbFe_SVN50q2jBqg07g-6_4GNmnwg1fHWR4S6M5GylAL-h7ztQ12_jKXtvHbTVUDwWEvydsvscm7V4qCTztU2gQttR2r0h173UPKFKy7_iznwBZXFWpDTyZR3WY6Xu_LmRF1kqpSCHHW5gz3uJBSBo466f8AxwNhEIjyHHRj8yFDSMXaSMp92v9r2qia-l3yDPEYweMNmREw-UT-qcIelArgcP-pRAjljr3uc8J14T1IXv_-L4jLipeqTspRO8JMpMfn7updxFQzeUSGy_76ngqAu5cOeYESmPP4VLScDnh1EWniBGCSt504zrjUWtqFKhXqvLpEoQQpFOpBmUCv6qMkmteQeVIadTpjnbQ6JIs2oeljBWrKg4JPxr83Ely7xMuuoIvAGzOj0S1Rukp2kC4cBAc94SyeqSlL6zHmLvlfNWiVJdsr-RbjZohi9Amd0Mh0nXUX622hvdxl3wRKcM3MEfjwE4SOsYhTjP1ExHTkOTksVh7CrEU5zp-D_zFcofe21Z-eG-wTYo6gtEYDhdm7CtwXRvGvG-0M0piFpWk2Jtu5yrWGz9mjue1cq5URoxcGUW640fTLZw3qVnZ288CWP_HgWaUvh8FlZYLwUmmuUqRJQwutKwvcIs_SZFXE6FE6obsReQWXHUm3hmpRctd8voHBjf5v1l6Oko02K81GkYXiiQ8kcw-NZCdzZ8j7gfr3r6pZgf3TCXN1GbEaup_Sa7n16SaNsGVeHm0LeYjA0CvNI7_GIzKV-SNrrhLl5w_H14BPB03EPjSr3L74h04oAiTw-89npsS_qupuQzua4F2WvT_miMDm-Lfdcjj_X5UC_F44_-LRiVmqhce1I__zr-Dffq6qf5XXTLbotfLQ99hMuW1yggBg8RqiNtLP4-dROtEFoxC3gdvQBHscILnvH3cSownzxPDuQeHyYKsNMt3t8hbzwj9Fn78P7m7T5hbXXbK1H7_kht8vrD29FtVhXyzfe3sCT2Xjitmbcc8KbNLOe-MJp7vhmb3hN9E4knr3dUEmQXeRWbogXTctEU28Irwm3hjtDiJJk23Hwhs0e0473Tn-5VXWyd6WFTGN0fjsV2z6XFp76jq_rwH6NptOPqN61Pz9AIp83N8D8m-vP4H_1sn7I)
