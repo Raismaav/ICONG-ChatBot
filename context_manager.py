@@ -2,7 +2,6 @@ import textract
 import PyPDF2
 import os
 
-
 class ContextManager:
     """
     ContextManager class is responsible for handling context files within a directory.

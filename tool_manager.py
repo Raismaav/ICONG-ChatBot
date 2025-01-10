@@ -1,5 +1,3 @@
-import query_functions as qf
-
 tools = [
     {
         "type": "function",
@@ -117,10 +115,6 @@ class ToolManager:
             result = add(arguments["num1"], arguments["num2"])
         elif name == "subtract":
             result = subtract(arguments["num1"], arguments["num2"])
-        elif name == "get_temperatures":
-            result = qf.get_temperatures(arguments["day"], arguments["avg"])
-        elif name == "temperature_distribution":
-            result = qf.temperature_distribution(arguments["day"])
         else:
             result = "The requested function was not found."
         return result
